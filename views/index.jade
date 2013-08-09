@@ -1,0 +1,21 @@
+extends layout
+
+block content
+	p
+		| Table Listing
+
+	table
+		thead
+			tr
+				th Name
+		tbody
+			- var items = list
+			- each item in items
+				tr
+					td
+						a(href=baseURL + "/" + item.table_name) #{item.table_name}
+						
+
+
+block sidebar
+	.widget

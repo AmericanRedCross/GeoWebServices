@@ -1,0 +1,34 @@
+extends layout
+
+block content
+
+	script(src = "http://codeorigin.jquery.com/jquery-2.0.3.min.js")
+	script(src = "/public/javascript/admin_test_page.js")
+
+	p
+		| Enter search term to find an stack of administrative boundaries
+	form(action='',method='post')
+		table.inputTable
+
+			tr
+				td
+					label(for='searchterm') Search Term
+				td
+					input(id='searchterm',type='text',value=searchterm,placeholder='searchterm',name='searchterm')
+				td
+					input(id='btnSearch',type='button',value='Submit',data-transition='fade', data-theme='c')
+		div.results
+
+		div(data-role='fieldcontain')   
+			input(id='btnOK', type='button',value='OK',data-transition='fade', data-theme='c')
+
+	
+	-if(infoMessage){
+		div.infoMessage
+			|#{infoMessage}
+	-}
+	-if(errorMessage){
+		div.errorMessage
+			|#{errorMessage}
+	-}
+

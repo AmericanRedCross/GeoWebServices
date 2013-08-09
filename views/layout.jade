@@ -1,0 +1,29 @@
+doctype 5
+html
+	head
+		title #{title}
+		link(rel='stylesheet', href='/stylesheets/style.css')
+	body
+		header
+			h1 GeoWebServices
+		div.breadcrumbs
+			-if(breadcrumbs){
+				each crumb in breadcrumbs
+					-if(crumb.link == ""){
+						|#{crumb.name}
+					-}else{
+						a(href=crumb.link) #{crumb.name}
+						-if(breadcrumbs.length > 1){
+							&nbsp;
+							>
+							&nbsp;
+						-}
+					-}
+			-}
+		.container
+			.main-content
+				block content
+		.sidebar
+				block sidebar
+	footer
+		p Running on node with Express, Jade and Less
