@@ -47,7 +47,7 @@ if ('development' == app.get('env')) {
 routes['listServices'] = function (req, res) {
 
     //object with available services
-    var opslist = [{ link: 'admin0list', name: 'List Admin 0 Names' },
+    var opslist = [
                    { link: 'nameSearch', name: 'Name search' },
                    { link: 'getAdminStack', name: 'Get Administrative Levels' }
                   ];
