@@ -191,19 +191,53 @@ routes['getAdminStack'] = flow.define(
         if (JSON.stringify(req.body) != '{}') {
             //Get the text arg, pass it to function
 
-            this.searchterm = "";
-            if (this.req.body.searchterm) {
-                this.searchterm = this.req.body.searchterm;
+            this.uniqueid = "";
+            this.adminlevel = -1;
+            this.datasource = "";
+            this.wkt = "";
+
+            if (this.req.body.uniqueid) {
+                this.uniqueid = this.req.body.uniqueid;
+            }
+            if (this.req.body.adminlevel) {
+                this.adminlevel = this.req.body.adminlevel;
+            }
+            if (this.req.body.datasource) {
+                this.datasource = this.req.body.datasource;
+            }
+            if (this.req.body.wkt) {
+                this.wkt = this.req.body.wkt;
+            }
+
+            //Set up an object to hold search terms
+            var searchObj = {};
+
+            //All 3 need to be defined OR WKT.
+            if (this.uniqueid && this.adminlevel && this.datasource) {
+                //Run the search
+                searchObj.uniqueid = this.uniqueid;
+                searchObj.adminlevel = this.adminlevel;
+                searchObj.datasource = this.datasource;
+                searchObj.isSpatial = false;
             }
             else {
-                var errorMessage = "You must specify a search term.";
-                this.res.render('get_admin_stack', { title: 'GeoWebServices', errorMessage: errorMessage, infoMessage: this.req.params.infoMessage, format: this.req.body.format, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Get Admin Stack" }] })
-                return;
+                if (this.wkt) {
+                    //Use the geometry to search
+                    searchObj.wkt = this.wkt;
+                    searchObj.isSpatial = true;
+                }
+                else {
+                    var errorMessage = "Please provide either a boundary's uniqueID, level and datasource, OR provide a WKT point.";
+                    this.res.render('get_admin_stack', { title: 'GeoWebServices', errorMessage: errorMessage, infoMessage: this.req.params.infoMessage, format: this.req.body.format, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Get Admin Stack" }] })
+                    return;
+                }
+
             }
+            
 
 
             //Try querying internal GeoDB
-            executeAdminNameSearch(this.searchterm, this);
+            executeAdminStackSearch(searchObj, this);
 
         }
         else {
@@ -352,6 +386,50 @@ function executeAdminNameSearch(searchterm, callback) {
         callback(result); //pass back result to calling function
     });
 }
+
+//pass in a search object with uniqueid, admin level, datasource OR WKT, find the matching administrative hierarchy
+function executeAdminStackSearch(searchObject, callback) {
+
+    //See if this is a spatial (WKT) search or not
+    if (searchObject.isSpatial == false) {
+        //lookup by id
+
+    }
+    else {
+        //do a spatial search
+
+    }
+    //var sql = "select * from udf_executeadminsearchbyname('" + searchterm + "')";
+    //var result = { status: "success", rows: [] }; //object to store results, and whether or not we encountered an error.
+    ////Setup Connection to PG
+    //var client = new pg.Client(conString);
+    //client.connect();
+
+    ////Log the query to the console, for debugging
+    //console.log("Executing admin name search: " + sql);
+    //var query = client.query(sql);
+
+    ////If query was successful, this is iterating thru result rows.
+    //query.on('row', function (row) {
+    //    result.rows.push(row);
+    //});
+
+    ////Handle query error - fires before end event
+    //query.on('error', function (error) {
+    //    //req.params.errorMessage = error;
+    //    result.status = "error";
+    //    result.message = error;
+    //});
+
+    ////end is called whether successfull or if error was called.
+    //query.on('end', function () {
+    //    //End PG connection
+    //    client.end();
+    //    callback(result); //pass back result to calling function
+    //});
+}
+
+
 
 //pass in a search term, check the Geonames API for matching names
 function executeGeoNamesAPISearch(searchterm, callback) {
