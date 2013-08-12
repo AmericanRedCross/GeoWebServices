@@ -3,6 +3,9 @@ var settings = {}
 settings.pg = {};
 settings.geonames = {};
 settings.loggly = {};
+settings.application = {};
+
+settings.application.port = 80;
 
 settings.pg.username = 'username';
 settings.pg.password = 'password';

@@ -38,7 +38,9 @@ Instructions for setting up Node.js 0.10.15 on Ubuntu 12.04 (EC2)
 	cd GeoWebServices
 	sudo npm install
 	sudo npm install -g nodemon
-	sudo ufw allow 3000
+
+### Run
+	sudo forever GeoWebServices.js
 
 
 
