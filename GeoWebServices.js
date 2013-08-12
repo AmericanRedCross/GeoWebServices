@@ -33,7 +33,7 @@ var config = {
 var logclient = loggly.createClient(config);
 
 // all environments
-app.set('port', process.env.PORT || 3000);
+app.set('port', process.env.PORT || settings.application.port);
 app.set('views', __dirname + '/views'); 
 app.set('view engine', 'jade');
 app.enable("jsonp callback");
