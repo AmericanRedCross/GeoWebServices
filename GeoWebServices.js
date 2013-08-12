@@ -19,7 +19,7 @@ var routes = [];
 var conString = "postgres://postgres:RedCrossOwner!@54.213.93.178:5432/Staging";
 
 // all environments
-app.set('port', process.env.PORT || 3000);
+app.set('port', process.env.PORT || 80);
 app.set('views', __dirname + '/views'); 
 app.set('view engine', 'jade');
 app.enable("jsonp callback");
