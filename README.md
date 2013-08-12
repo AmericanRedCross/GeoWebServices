@@ -30,8 +30,9 @@ Instructions for setting up Node.js 0.10.15 on Ubuntu 12.04 (EC2)
 	cd ~
 	sudo git clone https://github.com/AmericanRedCross/GeoWebServices.git
 
-### install forever module
-	npm install -g forever
+### install forever module, nodemon
+	sudo npm install -g forever
+	sudo npm i -g nodemon
 
 ### Install the GeoWebServices node app, global install of nodemon, open port 3000
 	cd GeoWebServices
