@@ -126,9 +126,9 @@ routes['nameSearch'] = flow.define(
             }
 
 
-            //Try querying internal GeoDB
-            executeAdminNameSearch(this.searchterm, this);
-            
+            //Try querying internal GeoDB - strict (exact match) first
+            executeAdminNameSearch(this.searchterm, { strict: true }, this);
+
         }
         else {
             //If the querystring is empty, just show the regular HTML form.
@@ -136,7 +136,43 @@ routes['nameSearch'] = flow.define(
             this.res.render('admin_namesearch', { title: 'GeoWebServices', breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Admin Query by Name" }] })
         }
     }, function (result) {
-        //this is the result of executeAdminNameSearch callback
+        //this is the result of executeAdminNameSearch 'strict' callback
+        //result should be sucess or error.  If success, return results to user.
+        //if error or no results, try the non-strict results
+
+        if (result && result.status == "success") {
+            if (result.rows.length > 0) {
+                //Return results
+                //Check which format was specified
+                if (!this.req.body.format || this.req.body.format == "html") {
+                    var formatted = JSONFormatter(result.rows); //The page will parse the geoJson to make the HTMl
+                    //Render HTML page with results at bottom
+                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.req.body.format, wkt: this.req.body.wkt, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+                }
+                else if (this.req.body.format && this.req.body.format == "JSON") {
+                    //Respond with JSON
+                    var formatted = JSONFormatter(result.rows);
+                    this.res.header("Content-Type:", "application/json");
+                    this.res.json(JSON.stringify(formatted)); //This allows for JSONP requests.
+                }
+                return;
+            }
+            else {
+                //no matches from GeoDb in strict mode
+                //Try querying internal GeoDB - not strict
+                executeAdminNameSearch(this.searchterm, { strict: false }, this);
+            }
+        }
+        else if (result && result.status == "error") {
+            //Try querying internal GeoDB - not strict
+            executeAdminNameSearch(this.searchterm, { strict: false }, this);
+        }
+        else {
+            //Try querying internal GeoDB - not strict
+            executeAdminNameSearch(this.searchterm, { strict: false }, this);
+        }
+    }, function (result) {
+        //this is the result of executeAdminNameSearch 'not-strict' callback
         //result should be sucess or error.  If success, return results to user.
         //if error or no results, try GeoNames
 
@@ -375,9 +411,24 @@ http.createServer(app).listen(app.get('port'), app.get('ipaddr'), function () {
 
 //Functions
 //pass in a search term, check the Geodatabase for matching names
-function executeAdminNameSearch(searchterm, callback) {
+function executeAdminNameSearch(searchterm, options, callback) {
 
-    var sql = "select * from udf_executeadminsearchbyname('" + searchterm + "')";
+    var sql = "";
+    if (options) {
+        if (options.strict == true) {
+            //Try for exact match
+            sql = "select * from udf_executestrictadminsearchbyname('" + searchterm + "')";
+        }
+        else {
+            //use wildcard match
+            sql = "select * from udf_executeadminsearchbyname('" + searchterm + "')";
+        }
+    }
+    else {
+        //use wildcard match
+        sql = "select * from udf_executeadminsearchbyname('" + searchterm + "')";
+    }
+
     var result = { status: "success", rows:[] }; //object to store results, and whether or not we encountered an error.
     //Setup Connection to PG
     var client = new pg.Client(conString);
