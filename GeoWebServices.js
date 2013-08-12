@@ -349,7 +349,7 @@ app.post('/admin_test_page', routes['showTestPage']);
 
 //Start listening
 http.createServer(app).listen(app.get('port'), app.get('ipaddr'), function () {
-    console.log('Express server listening on IP:' + app.get('ipaddr') + ', port ' + app.get('port'));
+    console.log('Express server listening on port' + app.get('port'));
 });
 
 
