@@ -28,7 +28,7 @@ Instructions for setting up Node.js 0.10.15 on Ubuntu 12.04 (EC2)
 
 ### clone repo
 	cd ~
-	git clone https://github.com/AmericanRedCross/GeoWebServices.git
+	sudo git clone https://github.com/AmericanRedCross/GeoWebServices.git
 
 ### install forever module
 	npm install -g forever
