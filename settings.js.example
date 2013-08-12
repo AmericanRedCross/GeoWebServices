@@ -1,0 +1,19 @@
+var settings = {}
+
+settings.pg = {};
+settings.geonames = {};
+settings.loggly = {};
+
+settings.pg.username = 'username';
+settings.pg.password = 'password';
+settings.pg.server = '127.0.0.1';
+settings.pg.port = '5432';
+settings.pg.database = 'test';
+
+settings.geonames.username = 'username';
+
+settings.loggly.subdomain = 'mysubdomain';
+settings.loggly.username = 'username';
+settings.loggly.password = 'password';
+
+module.exports = settings;

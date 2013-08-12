@@ -11,31 +11,29 @@ var express = require('express')
   , path = require('path')
   , flow = require('flow')
   , rest = require('./custom_modules/getJSON')
+  , settings = require('./settings')
   , loggly = require('loggly');
 
 var app = express();
 var routes = [];
 
 //PostGres Connection String
-var conString = "postgres://postgres:RedCrossOwner!@54.213.93.178:5432/Staging";
+var conString = "postgres://" + settings.pg.username + ":" + settings.pg.password + "@" + settings.pg.server + ":" + settings.pg.port + "/" + settings.pg.database;
 
 //Configure Loggly (logging API)
 var config = {
-    subdomain: "spatialdev",
+    subdomain: settings.loggly.subdomain,
     auth: {
-        username: "apollolm",
-        password: "alsep111"
+        username: settings.loggly.username,
+        password: settings.loggly.password
     }
 };
-
-//Loggly key (from website)
-var logglyKey = "7b9bd8e8-40ce-4135-af04-c05d715d2117";
 
 //Loggly client
 var logclient = loggly.createClient(config);
 
 // all environments
-app.set('port', process.env.PORT || 80);
+app.set('port', process.env.PORT || 3000);
 app.set('views', __dirname + '/views'); 
 app.set('view engine', 'jade');
 app.enable("jsonp callback");
@@ -460,7 +458,7 @@ function executeGeoNamesAPISearch(searchterm, callback) {
 
     var options = {
         host: 'api.geonames.org',
-        path: '/search?name=' + searchterm + '&username=apollolm&featureClass=A&featureClass=P&type=json',
+        path: '/search?name=' + searchterm + '&username=' + settings.geonames.username + '&featureClass=A&featureClass=P&type=json',
         method: 'GET',
         port: 80,
         headers: {
@@ -495,7 +493,7 @@ function JSONFormatter(rows) {
 
 function log(message) {
     //Write to console and to loggly
-    logclient.log(logglyKey, message);
+    logclient.log(settings.loggly.logglyKey, message);
     console.log(message);
 }
 
