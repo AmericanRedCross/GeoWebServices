@@ -23,17 +23,18 @@ Instructions for setting up Node.js 0.10.15 on Ubuntu 12.04 (EC2)
 	cd npm 
 	sudo make install
 
-### Use npm to install Express
-	sudo npm install express
+### Use npm to install Express globally (recommended to install globally and locally)
+	sudo npm install -g express
 
-### Create services directory, clone repo (Ryan's spatial server for now, will be this repo soon)
+### clone repo
 	cd ~
-	mkdir webservices
-	cd webservices
-	git clone https://github.com/spatialdev/PGRestAPI.git
+	git clone https://github.com/AmericanRedCross/GeoWebServices.git
+
+### install forever module
+	npm install -g forever
 
 ### Install the GeoWebServices node app, global install of nodemon, open port 3000
-	cd PGRestAPI
+	cd GeoWebServices
 	sudo npm install
 	sudo npm install -g nodemon
 	sudo ufw allow 3000
