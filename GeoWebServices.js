@@ -10,7 +10,8 @@ var express = require('express')
   , http = require('http')
   , path = require('path')
   , flow = require('flow')
-  , rest = require('./custom_modules/getJSON');
+  , rest = require('./custom_modules/getJSON')
+  , loggly = require('loggly');
 
 var app = express();
 var routes = [];
@@ -18,8 +19,23 @@ var routes = [];
 //PostGres Connection String
 var conString = "postgres://postgres:RedCrossOwner!@54.213.93.178:5432/Staging";
 
+//Configure Loggly (logging API)
+var config = {
+    subdomain: "spatialdev",
+    auth: {
+        username: "apollolm",
+        password: "alsep111"
+    }
+};
+
+//Loggly key (from website)
+var logglyKey = "7b9bd8e8-40ce-4135-af04-c05d715d2117";
+
+//Loggly client
+var logclient = loggly.createClient(config);
+
 // all environments
-app.set('port', process.env.PORT || 80);
+app.set('port', process.env.PORT || 3000);
 app.set('views', __dirname + '/views'); 
 app.set('view engine', 'jade');
 app.enable("jsonp callback");
@@ -34,6 +50,12 @@ app.use(require('less-middleware')({ src: __dirname + '/public' }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use("/public/javascript", express.static(path.join(__dirname, 'public/javascript')));
 app.use("/public/html_test", express.static(path.join(__dirname, 'public/html_test')));
+app.use(function (err, req, res, next) {
+    console.error(err.stack);
+    log(err.message);
+    res.send(500, 'There was an error with the web servcie. Please try your operation again.');
+    log('There was an error with the web servcie. Please try your operation again.');
+});
 
 
 // development only
@@ -349,7 +371,7 @@ app.post('/admin_test_page', routes['showTestPage']);
 
 //Start listening
 http.createServer(app).listen(app.get('port'), app.get('ipaddr'), function () {
-    console.log('Express server listening on port' + app.get('port'));
+    log('Express server listening on port ' + app.get('port'));
 });
 
 
@@ -364,7 +386,8 @@ function executeAdminNameSearch(searchterm, callback) {
     client.connect();
 
     //Log the query to the console, for debugging
-    console.log("Executing admin name search: " + sql);
+    log("Executing admin name search: " + sql);
+
     var query = client.query(sql);
 
     //If query was successful, this is iterating thru result rows.
@@ -446,7 +469,7 @@ function executeGeoNamesAPISearch(searchterm, callback) {
     };
 
     rest.getJSON(options, function (statusCode, result) {
-        console.log("got geonames result.");
+        log("got geonames result.");
         callback(statusCode, result)
     }); //send result back to calling function
 }
@@ -469,6 +492,12 @@ function JSONFormatter(rows) {
 
 
 //Utilities
+
+function log(message) {
+    //Write to console and to loggly
+    logclient.log(logglyKey, message);
+    console.log(message);
+}
 
 //Determine if a string contains all numbers.
 function IsNumeric(sText) {

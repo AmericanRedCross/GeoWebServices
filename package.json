@@ -6,7 +6,7 @@
     "start": "node_modules\\.bin\\supervisor node app.js",
     "test": "node_modules\\.bin\\mocha -u tdd"
   },
-  "repository" :{
+  "repository" : {
     "type" : "git",
     "url" : "https://github.com/AmericanRedCross/GeoWebServices.git"
   },
@@ -19,6 +19,7 @@
     "jade": "*",
     "pg": "*",
     "flow": "*",
-    "less-middleware": "*"
+    "less-middleware": "*",
+    "loggly": "*"
   }
 }
