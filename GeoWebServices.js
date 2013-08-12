@@ -35,7 +35,7 @@ var logglyKey = "7b9bd8e8-40ce-4135-af04-c05d715d2117";
 var logclient = loggly.createClient(config);
 
 // all environments
-app.set('port', process.env.PORT || 3000);
+app.set('port', process.env.PORT || 80);
 app.set('views', __dirname + '/views'); 
 app.set('view engine', 'jade');
 app.enable("jsonp callback");
