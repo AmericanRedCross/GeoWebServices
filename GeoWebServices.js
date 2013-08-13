@@ -121,7 +121,7 @@ routes['nameSearch'] = flow.define(
             }
             else {
                 var errorMessage = "You must specify a search term.";
-                this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: errorMessage, infoMessage: this.req.params.infoMessage, format: this.req.body.format, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+                this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: errorMessage, infoMessage: this.req.params.infoMessage, searchterm: this.req.body.searchterm, format: this.req.body.format, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
                 return;
             }
 
@@ -147,7 +147,7 @@ routes['nameSearch'] = flow.define(
                 if (!this.req.body.format || this.req.body.format == "html") {
                     var formatted = JSONFormatter(result.rows); //The page will parse the geoJson to make the HTMl
                     //Render HTML page with results at bottom
-                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.req.body.format, wkt: this.req.body.wkt, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.req.body.format, searchterm: this.req.body.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
                 }
                 else if (this.req.body.format && this.req.body.format == "JSON") {
                     //Respond with JSON
@@ -183,7 +183,7 @@ routes['nameSearch'] = flow.define(
                 if (!this.req.body.format || this.req.body.format == "html") {
                     var formatted = JSONFormatter(result.rows); //The page will parse the geoJson to make the HTMl
                     //Render HTML page with results at bottom
-                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.req.body.format, wkt: this.req.body.wkt, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.req.body.format, searchterm: this.req.body.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
                 }
                 else if (this.req.body.format && this.req.body.format == "JSON") {
                     //Respond with JSON
@@ -217,7 +217,7 @@ routes['nameSearch'] = flow.define(
                 var formatted = JSONFormatter(result.geonames); //format as JSON
                 if (!this.req.body.format || this.req.body.format == "html") {
                     //Render HTML page with results at bottom
-                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.req.body.format, wkt: this.req.body.wkt, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.req.body.format, searchterm: this.req.body.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
                 }
                 else if (this.req.body.format && this.req.body.format == "JSON") {
                     //Respond with JSON
@@ -228,12 +228,12 @@ routes['nameSearch'] = flow.define(
             else {
                 //no results
                 var infoMessage = "No results found.";
-                this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: infoMessage, featureCollection: formatted, format: this.req.body.format, wkt: this.req.body.wkt, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+                this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: infoMessage, featureCollection: formatted, format: this.req.body.format, searchterm: this.req.body.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
             }
         } else {
             //handle it
             var errorMessage = "Unable to complete operation. Response code: " + statuscode;
-            this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.req.body.format, wkt: this.req.body.wkt, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+            this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.req.body.format, searchterm: this.req.body.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
         }
     }
 );
@@ -302,7 +302,6 @@ routes['getAdminStack'] = flow.define(
             this.res.render('get_admin_stack', { title: 'GeoWebServices', breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Get Admin Stack" }] })
         }
     }
-
 );
 
 
@@ -465,12 +464,16 @@ function executeAdminStackSearch(searchObject, callback) {
     //See if this is a spatial (WKT) search or not
     if (searchObject.isSpatial == false) {
         //lookup by id
+        searchObj.uniqueid
+        searchObj.adminlevel
+        searchObj.datasource
 
     }
     else {
         //do a spatial search
 
     }
+
     //var sql = "select * from udf_executeadminsearchbyname('" + searchterm + "')";
     //var result = { status: "success", rows: [] }; //object to store results, and whether or not we encountered an error.
     ////Setup Connection to PG
@@ -506,6 +509,9 @@ function executeAdminStackSearch(searchObject, callback) {
 //pass in a search term, check the Geonames API for matching names
 function executeGeoNamesAPISearch(searchterm, callback) {
     //Reach out to GeoNames API
+
+    //Encode for URL
+    searchterm = encodeURIComponent(searchterm);
 
     var options = {
         host: 'api.geonames.org',
