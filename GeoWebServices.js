@@ -15,6 +15,8 @@ var express = require('express')
   , loggly = require('loggly');
 
 var app = express();
+
+//Array to hold functions for routes
 var routes = [];
 
 //PostGres Connection String
@@ -62,8 +64,7 @@ if ('development' == app.get('env')) {
 }
 
 //Define Routes
-
-//List available operations
+//List available operations - default screen
 routes['listServices'] = function (req, res) {
 
     //object with available services
@@ -97,8 +98,6 @@ routes['showTestPage'] = flow.define(
             //Send to view
             res.render('admin_test_page', { baseURL: req.url })
         }
-
-
     }
 );
 
@@ -110,18 +109,33 @@ routes['nameSearch'] = flow.define(
     function (req, res) {
         this.req = req;
         this.res = res;
+        this.args = {};
+
+        if (this.req.method.toLowerCase() == "post") {
+            //If a post, then arguments will be members of the this.req.body property
+            this.args = this.req.body;
+        }
+        else if (this.req.method.toLowerCase() == "get") {
+            //If request is a get, then args will be members of the this.req.query property
+            this.args = this.req.query;
+        }
 
         // arguments passed to routes['adminNameSearch'] will pass through to this first function
-        if (JSON.stringify(req.body) != '{}') {
+        if (JSON.stringify(this.args) != '{}') {
             //Get the text arg, pass it to function
             //udf_executeadminsearchbyname
             this.searchterm = "";
-            if (this.req.body.searchterm) {
-                this.searchterm = this.req.body.searchterm;
+            if (this.args.searchterm) {
+                this.searchterm = this.args.searchterm;
             }
             else {
                 var errorMessage = "You must specify a search term.";
-                this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: errorMessage, infoMessage: this.req.params.infoMessage, searchterm: this.req.body.searchterm, format: this.req.body.format, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+                if (!this.args.format || this.args.format == "html") {
+                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: errorMessage, infoMessage: this.req.params.infoMessage, searchterm: this.args.searchterm, format: this.args.format, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+                }
+                else if (this.args.format && this.args.format == "JSON") {
+                    this.res.jsonp({ message: errorMessage });
+                }
                 return;
             }
 
@@ -144,16 +158,16 @@ routes['nameSearch'] = flow.define(
             if (result.rows.length > 0) {
                 //Return results
                 //Check which format was specified
-                if (!this.req.body.format || this.req.body.format == "html") {
+                if (!this.args.format || this.args.format == "html") {
                     var formatted = JSONFormatter(result.rows); //The page will parse the geoJson to make the HTMl
                     //Render HTML page with results at bottom
-                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.req.body.format, searchterm: this.req.body.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.args.format, searchterm: this.args.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
                 }
-                else if (this.req.body.format && this.req.body.format == "JSON") {
+                else if (this.args.format && this.args.format == "JSON") {
                     //Respond with JSON
                     var formatted = JSONFormatter(result.rows);
-                    this.res.header("Content-Type:", "application/json");
-                    this.res.json(JSON.stringify(formatted)); //This allows for JSONP requests.
+                    formatted.source = "GeoDB";
+                    this.res.jsonp(formatted); //This allows for JSONP requests.
                 }
                 return;
             }
@@ -180,16 +194,16 @@ routes['nameSearch'] = flow.define(
             if (result.rows.length > 0) {
                 //Return results
                 //Check which format was specified
-                if (!this.req.body.format || this.req.body.format == "html") {
+                if (!this.args.format || this.args.format == "html") {
                     var formatted = JSONFormatter(result.rows); //The page will parse the geoJson to make the HTMl
                     //Render HTML page with results at bottom
-                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.req.body.format, searchterm: this.req.body.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.args.format, searchterm: this.args.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
                 }
-                else if (this.req.body.format && this.req.body.format == "JSON") {
+                else if (this.args.format && this.args.format == "JSON") {
                     //Respond with JSON
                     var formatted = JSONFormatter(result.rows);
-                    this.res.header("Content-Type:", "application/json");
-                    this.res.json(JSON.stringify(formatted)); //This allows for JSONP requests.
+                    formatted.source = "GeoDB";
+                    this.res.jsonp(formatted); //This allows for JSONP requests.
                 }
                 return;
             }
@@ -215,25 +229,26 @@ routes['nameSearch'] = flow.define(
             //we got a response, decide what to do
             if (result && result.geonames && result.geonames.length > 0) {
                 var formatted = JSONFormatter(result.geonames); //format as JSON
-                if (!this.req.body.format || this.req.body.format == "html") {
+                formatted.source = "Geonames";
+
+                if (!this.args.format || this.args.format == "html") {
                     //Render HTML page with results at bottom
-                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.req.body.format, searchterm: this.req.body.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.args.format, searchterm: this.args.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
                 }
-                else if (this.req.body.format && this.req.body.format == "JSON") {
+                else if (this.args.format && this.args.format == "JSON") {
                     //Respond with JSON
-                    this.res.header("Content-Type:", "application/json");
-                    this.res.json(JSON.stringify(formatted)); //This allows for JSONP requests.
+                    this.res.jsonp(formatted); //This allows for JSONP requests.
                 }
             }
             else {
                 //no results
                 var infoMessage = "No results found.";
-                this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: infoMessage, featureCollection: formatted, format: this.req.body.format, searchterm: this.req.body.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+                this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: infoMessage, featureCollection: formatted, format: this.args.format, searchterm: this.args.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
             }
         } else {
             //handle it
             var errorMessage = "Unable to complete operation. Response code: " + statuscode;
-            this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.req.body.format, searchterm: this.req.body.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+            this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.args.format, searchterm: this.args.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
         }
     }
 );
@@ -243,26 +258,36 @@ routes['getAdminStack'] = flow.define(
     function (req, res) {
         this.req = req;
         this.res = res;
+        this.args = {};
 
-        if (JSON.stringify(req.body) != '{}') {
+        if (this.req.method.toLowerCase() == "post") {
+            //If a post, then arguments will be members of the this.req.body property
+            this.args = this.req.body;
+        }
+        else if (this.req.method.toLowerCase() == "get") {
+            //If request is a get, then args will be members of the this.req.query property
+            this.args = this.req.query;
+        }
+
+        if (JSON.stringify(this.args) != '{}') {
             //Get the text arg, pass it to function
-
+             
             this.uniqueid = "";
-            this.adminlevel = -1;
+            this.adminlevel = "";
             this.datasource = "";
             this.wkt = "";
 
-            if (this.req.body.uniqueid) {
-                this.uniqueid = this.req.body.uniqueid;
+            if (this.args.uniqueid) {
+                this.uniqueid = this.args.uniqueid;
             }
-            if (this.req.body.adminlevel) {
-                this.adminlevel = this.req.body.adminlevel;
+            if (this.args.adminlevel) {
+                this.adminlevel = this.args.adminlevel;
             }
-            if (this.req.body.datasource) {
-                this.datasource = this.req.body.datasource;
+            if (this.args.datasource) {
+                this.datasource = this.args.datasource;
             }
-            if (this.req.body.wkt) {
-                this.wkt = this.req.body.wkt;
+            if (this.args.wkt) {
+                this.wkt = this.args.wkt;
             }
 
             //Set up an object to hold search terms
@@ -286,11 +311,17 @@ routes['getAdminStack'] = flow.define(
                 }
                 else {
                     var errorMessage = "Please provide either a boundary's uniqueID, level and datasource, OR provide a WKT point and datasource.";
-                    this.res.render('get_admin_stack', { title: 'GeoWebServices', errorMessage: errorMessage, infoMessage: this.req.params.infoMessage, format: this.req.body.format, wkt: this.req.body.wkt, uniqueid: this.req.body.uniqueid, adminlevel:this.req.body.adminlevel, datasource: this.req.body.format, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Get Admin Stack" }] })
+                    if (!this.args.format || this.args.format == "html") {
+                        this.res.render('get_admin_stack', { title: 'GeoWebServices', errorMessage: errorMessage, infoMessage: this.req.params.infoMessage, format: this.args.format, wkt: this.args.wkt, uniqueid: this.args.uniqueid, adminlevel: this.args.adminlevel, datasource: this.args.format, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Get Admin Stack" }] })
+
+                    }
+                    else if (this.args.format && this.args.format == "JSON") {
+                        this.res.jsonp({ message: errorMessage });
+                    }
                     return;
                 }
             }
-            
+
             //Try querying internal GeoDB
             executeAdminStackSearch(searchObj, this);
 
@@ -305,19 +336,18 @@ routes['getAdminStack'] = flow.define(
         //successful search
         if (result.status == "success") {
             var formatted = JSONFormatter(result.rows); //format as JSON
-            if (!this.req.body.format || this.req.body.format == "html") {
+            if (!this.args.format || this.args.format == "html") {
                 //Render HTML page with results at bottom
-                this.res.render('get_admin_stack', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, wkt: this.req.body.wkt, uniqueid: this.req.body.uniqueid, adminlevel: this.req.body.adminlevel, format: this.req.body.format, datasource: this.req.body.datasource, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+                this.res.render('get_admin_stack', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, wkt: this.args.wkt, uniqueid: this.args.uniqueid, adminlevel: this.args.adminlevel, format: this.args.format, datasource: this.args.datasource, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
             }
-            else if (this.req.body.format && this.req.body.format == "JSON") {
+            else if (this.args.format && this.args.format == "JSON") {
                 //Respond with JSON
-                this.res.header("Content-Type:", "application/json");
-                this.res.json(JSON.stringify(formatted)); //This allows for JSONP requests.
+                this.res.jsonp(formatted); //This allows for JSONP requests.
             }
         }
         else if (result.status == "error") {
             log(result.message.text);
-            this.res.render('get_admin_stack', { title: 'GeoWebServices', errorMessage: "error: " + result.message.text, infoMessage: this.req.params.infoMessage, featureCollection: formatted, wkt: this.req.body.wkt, uniqueid: this.req.body.uniqueid, adminlevel: this.req.body.adminlevel, format: this.req.body.format, datasource: this.req.body.datasource, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+            this.res.render('get_admin_stack', { title: 'GeoWebServices', errorMessage: "error: " + result.message.text, infoMessage: this.req.params.infoMessage, featureCollection: formatted, wkt: this.args.wkt, uniqueid: this.args.uniqueid, adminlevel: this.args.adminlevel, format: this.args.format, datasource: this.args.datasource, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
         }
         
     }
@@ -468,7 +498,7 @@ function executeAdminStackSearch(searchObject, callback) {
     }
     else {
         //do a spatial search
-        
+
         //If user specifies admin level, then use that to start with, otherwise, start with the lowest level for that datasource
         var adminLevel = 2;
 
@@ -480,6 +510,8 @@ function executeAdminStackSearch(searchObject, callback) {
             //use a specified level
             adminLevel = dsLevels[searchObject.datasource.toLowerCase()];
         }
+
+        log(adminLevel);
 
         //Admin level will be passed in iteratively until we find a match.
         function hitTest(level) {

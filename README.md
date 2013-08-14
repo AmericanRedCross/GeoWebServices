@@ -42,6 +42,9 @@ Instructions for setting up Node.js 0.10.15 on Ubuntu 12.04 (EC2)
 ### Run
 	sudo forever GeoWebServices.js
 
+### Restarting
+	sudo forever stop 0
+
 
 
 
