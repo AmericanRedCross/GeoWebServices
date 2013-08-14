@@ -277,21 +277,20 @@ routes['getAdminStack'] = flow.define(
                 searchObj.isSpatial = false;
             }
             else {
-                if (this.wkt) {
+                if (this.wkt && this.datasource) {
                     //Use the geometry to search
                     searchObj.wkt = this.wkt;
+                    searchObj.datasource = this.datasource; //optional
+                    searchObj.adminlevel = this.adminlevel; //optional
                     searchObj.isSpatial = true;
                 }
                 else {
-                    var errorMessage = "Please provide either a boundary's uniqueID, level and datasource, OR provide a WKT point.";
-                    this.res.render('get_admin_stack', { title: 'GeoWebServices', errorMessage: errorMessage, infoMessage: this.req.params.infoMessage, format: this.req.body.format, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Get Admin Stack" }] })
+                    var errorMessage = "Please provide either a boundary's uniqueID, level and datasource, OR provide a WKT point and datasource.";
+                    this.res.render('get_admin_stack', { title: 'GeoWebServices', errorMessage: errorMessage, infoMessage: this.req.params.infoMessage, format: this.req.body.format, wkt: this.req.body.wkt, uniqueid: this.req.body.uniqueid, adminlevel:this.req.body.adminlevel, datasource: this.req.body.format, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Get Admin Stack" }] })
                     return;
                 }
-
             }
             
-
-
             //Try querying internal GeoDB
             executeAdminStackSearch(searchObj, this);
 
@@ -301,6 +300,26 @@ routes['getAdminStack'] = flow.define(
             //Render Query Form without any results.
             this.res.render('get_admin_stack', { title: 'GeoWebServices', breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Get Admin Stack" }] })
         }
+    }, function (result) {
+        //The result of execute Admin Stack Search
+        //successful search
+        if (result.status == "success") {
+            var formatted = JSONFormatter(result.rows); //format as JSON
+            if (!this.req.body.format || this.req.body.format == "html") {
+                //Render HTML page with results at bottom
+                this.res.render('get_admin_stack', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, wkt: this.req.body.wkt, uniqueid: this.req.body.uniqueid, adminlevel: this.req.body.adminlevel, format: this.req.body.format, datasource: this.req.body.datasource, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+            }
+            else if (this.req.body.format && this.req.body.format == "JSON") {
+                //Respond with JSON
+                this.res.header("Content-Type:", "application/json");
+                this.res.json(JSON.stringify(formatted)); //This allows for JSONP requests.
+            }
+        }
+        else if (result.status == "error") {
+            log(result.message.text);
+            this.res.render('get_admin_stack', { title: 'GeoWebServices', errorMessage: "error: " + result.message.text, infoMessage: this.req.params.infoMessage, featureCollection: formatted, wkt: this.req.body.wkt, uniqueid: this.req.body.uniqueid, adminlevel: this.req.body.adminlevel, format: this.req.body.format, datasource: this.req.body.datasource, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+        }
+        
     }
 );
 
@@ -410,6 +429,7 @@ http.createServer(app).listen(app.get('port'), app.get('ipaddr'), function () {
 
 //Functions
 //pass in a search term, check the Geodatabase for matching names
+//This is part 1 of 2 for getting back an admin stack
 function executeAdminNameSearch(searchterm, options, callback) {
 
     var sql = "";
@@ -419,24 +439,89 @@ function executeAdminNameSearch(searchterm, options, callback) {
             sql = "select * from udf_executestrictadminsearchbyname('" + searchterm + "')";
         }
         else {
-            //use wildcard match
+            //use wildcard or partial match
             sql = "select * from udf_executeadminsearchbyname('" + searchterm + "')";
         }
     }
     else {
-        //use wildcard match
+        //use wildcard or partial match
         sql = "select * from udf_executeadminsearchbyname('" + searchterm + "')";
     }
 
-    var result = { status: "success", rows:[] }; //object to store results, and whether or not we encountered an error.
+    //run it
+    executePgQuery(sql, callback);
+}
+
+//pass in a search object with uniqueid, admin level, datasource OR WKT, find the matching administrative hierarchy
+function executeAdminStackSearch(searchObject, callback) {
+    var sql = "";
+
+    //See if this is a spatial (WKT) search or not
+    if (searchObject.isSpatial == false) {
+        //lookup by id, datasource and level
+        //build sql query
+        sql = buildAdminStackQuery(searchObject.uniqueid, searchObject.datasource, searchObject.adminlevel);
+        log(sql);
+
+        //run it
+        executePgQuery(sql, callback);
+    }
+    else {
+        //do a spatial search
+        
+        //If user specifies admin level, then use that to start with, otherwise, start with the lowest level for that datasource
+        var adminLevel = 2;
+
+        if (searchObject.adminlevel) {
+            //use user's level
+            adminLevel = searchObject.adminlevel;
+        }
+        else {
+            //use a specified level
+            adminLevel = dsLevels[searchObject.datasource.toLowerCase()];
+        }
+
+        //Admin level will be passed in iteratively until we find a match.
+        function hitTest(level) {
+            if (level >= 0) {
+                //Do Hit Test, starting with lowest available admin level
+                log("In hit test loop.  checking level " + level);
+                sql = buildAdminStackSpatialQuery(searchObject.wkt, searchObject.datasource, level);
+                executePgQuery(sql, function (result) {
+                    if (result.status == "success") {
+                        //we found a match, break out.
+                        if (result.rows.length > 0) {
+                            callback(result);
+                            return;
+                        }
+                        else {
+                            //continue searching
+                            hitTest(level - 1);
+                        }
+                    }
+                    else {
+                        //continue searching
+                        hitTest(level-1);
+                    }
+                });
+            }
+        }
+        //initiate loop
+        hitTest(adminLevel);
+    }
+}
+
+function executePgQuery(query, callback) {
+    var result = { status: "success", rows: [] }; //object to store results, and whether or not we encountered an error.
+
+    //Just run the query
     //Setup Connection to PG
     var client = new pg.Client(conString);
     client.connect();
 
     //Log the query to the console, for debugging
-    log("Executing admin name search: " + sql);
-
-    var query = client.query(sql);
+    console.log("Executing query: " + query);
+    var query = client.query(query);
 
     //If query was successful, this is iterating thru result rows.
     query.on('row', function (row) {
@@ -456,52 +541,6 @@ function executeAdminNameSearch(searchterm, options, callback) {
         client.end();
         callback(result); //pass back result to calling function
     });
-}
-
-//pass in a search object with uniqueid, admin level, datasource OR WKT, find the matching administrative hierarchy
-function executeAdminStackSearch(searchObject, callback) {
-
-    //See if this is a spatial (WKT) search or not
-    if (searchObject.isSpatial == false) {
-        //lookup by id
-        searchObj.uniqueid
-        searchObj.adminlevel
-        searchObj.datasource
-
-    }
-    else {
-        //do a spatial search
-
-    }
-
-    //var sql = "select * from udf_executeadminsearchbyname('" + searchterm + "')";
-    //var result = { status: "success", rows: [] }; //object to store results, and whether or not we encountered an error.
-    ////Setup Connection to PG
-    //var client = new pg.Client(conString);
-    //client.connect();
-
-    ////Log the query to the console, for debugging
-    //console.log("Executing admin name search: " + sql);
-    //var query = client.query(sql);
-
-    ////If query was successful, this is iterating thru result rows.
-    //query.on('row', function (row) {
-    //    result.rows.push(row);
-    //});
-
-    ////Handle query error - fires before end event
-    //query.on('error', function (error) {
-    //    //req.params.errorMessage = error;
-    //    result.status = "error";
-    //    result.message = error;
-    //});
-
-    ////end is called whether successfull or if error was called.
-    //query.on('end', function () {
-    //    //End PG connection
-    //    client.end();
-    //    callback(result); //pass back result to calling function
-    //});
 }
 
 
@@ -543,6 +582,94 @@ function JSONFormatter(rows) {
     })
 
     return featureCollection;
+}
+
+//The lowest level for each datasource
+var dsLevels = {};
+dsLevels["gadm"] = 5;
+dsLevels["gaul"] = 2;
+dsLevels["naturalearth"] = 1;
+dsLevels["local"] = 2;
+
+//Columns by level and datasource
+var dsColumns = {};
+
+dsColumns["gadm0"] = "ogc_fid, id_0, name_0";
+dsColumns["gadm1"] = "ogc_fid, id_0, name_0, id_1, name_1";
+dsColumns["gadm2"] = "ogc_fid, id_0, name_0, id_1, name_1, id_2, name_2";
+dsColumns["gadm3"] = "ogc_fid, id_0, name_0, id_1, name_1, id_2, name_2, id_3, name_3";
+dsColumns["gadm4"] = "ogc_fid, id_0, name_0, id_1, name_1, id_2, name_2, id_3, name_3, id_4, name_4";
+dsColumns["gadm5"] = "ogc_fid, id_0, name_0, id_1, name_1, id_2, name_2, id_3, name_3, id_4, name_4, id_5, name_5";
+
+dsColumns["gaul0"] = "ogc_fid, adm0_code, adm0_name";
+dsColumns["gaul1"] = "ogc_fid, adm0_code, adm0_name, adm1_code, adm1_name";
+dsColumns["gaul2"] = "ogc_fid, adm0_code, adm0_name, adm1_code, adm1_name, adm2_code, adm2_name";
+
+//TODO
+dsColumns["naturalearth0"] = "ogc_fid, adm0_code, adm0_name";
+dsColumns["naturalearth1"] = "ogc_fid, adm0_code, adm0_name, adm1_code, adm1_name";
+
+//TODO
+dsColumns["local0"] = "ogc_fid, adm0_code, adm0_name";
+dsColumns["local1"] = "ogc_fid, adm0_code, adm0_name, adm1_code, adm1_name";
+
+function buildAdminStackQuery(rowid, datasource, level) {
+    //build up the query to be executed
+    var query = "";
+    var table = "";
+    switch (datasource.toLowerCase()) {
+        case "gadm":
+            table = "gadm" + level;
+            query = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE ogc_fid = " + rowid;
+            break;
+
+        case "gaul":
+            table = "gaul" + level;
+            query = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE ogc_fid = " + rowid;
+            break;
+
+        case "naturalearth":
+            table = "naturalearth" + level;
+            query = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE ogc_fid = " + rowid;
+            break;
+
+        case "local":
+            table = "local" + level;
+            query = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE where ogc_fid = " + rowid;
+            break;
+    }
+
+    return query;
+}
+
+function buildAdminStackSpatialQuery(wkt, datasource, level) {
+    //build the spatial query
+    var query = "";
+    var table = "";
+
+    switch (datasource.toLowerCase()) {
+        case "gadm":
+            table = "gadm" + level;
+            query = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE ST_Intersects(ST_GeomFromText('" + wkt + "', 4326), geom)";
+            break;
+
+        case "gaul":
+            table = "gaul" + level;
+            query = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE ST_Intersects(ST_GeomFromText('" + wkt + "', 4326), geom)";
+            break;
+
+        case "naturalearth":
+            table = "naturalearth" + level;
+            query = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE ST_Intersects(ST_GeomFromText('" + wkt + "', 4326), geom)";
+            break;
+
+        case "local":
+            table = "local" + level;
+            query = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE ST_Intersects(ST_GeomFromText('" + wkt + "', 4326), geom)";
+            break;
+    }
+
+    return query;
 }
 
 
