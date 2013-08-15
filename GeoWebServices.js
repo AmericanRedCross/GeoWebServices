@@ -131,7 +131,7 @@ routes['nameSearch'] = flow.define(
             else {
                 var errorMessage = "You must specify a search term.";
                 if (!this.args.format || this.args.format == "html") {
-                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: errorMessage, infoMessage: this.req.params.infoMessage, searchterm: this.args.searchterm, format: this.args.format, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: errorMessage, returnGeometry: this.args.returnGeometry, infoMessage: this.req.params.infoMessage, searchterm: this.args.searchterm, format: this.args.format, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
                 }
                 else if (this.args.format && this.args.format == "JSON") {
                     this.res.jsonp({ message: errorMessage });
@@ -141,7 +141,7 @@ routes['nameSearch'] = flow.define(
 
 
             //Try querying internal GeoDB - strict (exact match) first
-            executeAdminNameSearch(this.searchterm, { strict: true }, this);
+            executeAdminNameSearch(this.searchterm, { strict: true, returnGeometry: this.args.returnGeometry }, this);
 
         }
         else {
@@ -161,11 +161,19 @@ routes['nameSearch'] = flow.define(
                 if (!this.args.format || this.args.format == "html") {
                     var formatted = JSONFormatter(result.rows); //The page will parse the geoJson to make the HTMl
                     //Render HTML page with results at bottom
-                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.args.format, searchterm: this.args.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, returnGeometry: this.args.returnGeometry, featureCollection: formatted, format: this.args.format, searchterm: this.args.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
                 }
-                else if (this.args.format && this.args.format == "JSON") {
+                else if (this.args.format && this.args.format == "GeoJSON") {
                     //Respond with JSON
-                    var formatted = JSONFormatter(result.rows);
+                    var formatted = "";
+                    if (this.args.returnGeometry == "yes") {
+                        //Format with geometry
+                        formatted = geoJSONFormatter(result.rows);
+                    }
+                    else {
+                        //Format without geometry
+                        formatted = JSONFormatter(result.rows);
+                    }
                     formatted.source = "GeoDB";
                     this.res.jsonp(formatted); //This allows for JSONP requests.
                 }
@@ -174,16 +182,16 @@ routes['nameSearch'] = flow.define(
             else {
                 //no matches from GeoDb in strict mode
                 //Try querying internal GeoDB - not strict
-                executeAdminNameSearch(this.searchterm, { strict: false }, this);
+                executeAdminNameSearch(this.searchterm, { strict: false, returnGeometry: this.args.returnGeometry }, this);
             }
         }
         else if (result && result.status == "error") {
             //Try querying internal GeoDB - not strict
-            executeAdminNameSearch(this.searchterm, { strict: false }, this);
+            executeAdminNameSearch(this.searchterm, { strict: false, returnGeometry: this.args.returnGeometry }, this);
         }
         else {
             //Try querying internal GeoDB - not strict
-            executeAdminNameSearch(this.searchterm, { strict: false }, this);
+            executeAdminNameSearch(this.searchterm, { strict: false, returnGeometry: this.args.returnGeometry }, this);
         }
     }, function (result) {
         //this is the result of executeAdminNameSearch 'not-strict' callback
@@ -197,11 +205,19 @@ routes['nameSearch'] = flow.define(
                 if (!this.args.format || this.args.format == "html") {
                     var formatted = JSONFormatter(result.rows); //The page will parse the geoJson to make the HTMl
                     //Render HTML page with results at bottom
-                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.args.format, searchterm: this.args.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, returnGeometry: this.args.returnGeometry, format: this.args.format, searchterm: this.args.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
                 }
-                else if (this.args.format && this.args.format == "JSON") {
+                else if (this.args.format && this.args.format == "GeoJSON") {
                     //Respond with JSON
-                    var formatted = JSONFormatter(result.rows);
+                    var formatted = "";
+                    if (this.args.returnGeometry == "yes") {
+                        //Format with geometry
+                        formatted = geoJSONFormatter(result.rows);
+                    }
+                    else {
+                        //Format without geometry
+                        formatted = JSONFormatter(result.rows);
+                    }
                     formatted.source = "GeoDB";
                     this.res.jsonp(formatted); //This allows for JSONP requests.
                 }
@@ -233,9 +249,9 @@ routes['nameSearch'] = flow.define(
 
                 if (!this.args.format || this.args.format == "html") {
                     //Render HTML page with results at bottom
-                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.args.format, searchterm: this.args.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+                    this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, returnGeometry: this.args.returnGeometry, format: this.args.format, searchterm: this.args.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
                 }
-                else if (this.args.format && this.args.format == "JSON") {
+                else if (this.args.format && this.args.format == "GeoJSON") {
                     //Respond with JSON
                     this.res.jsonp(formatted); //This allows for JSONP requests.
                 }
@@ -243,12 +259,12 @@ routes['nameSearch'] = flow.define(
             else {
                 //no results
                 var infoMessage = "No results found.";
-                this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: infoMessage, featureCollection: formatted, format: this.args.format, searchterm: this.args.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+                this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: this.req.params.errorMessage, infoMessage: infoMessage, featureCollection: formatted, returnGeometry: this.args.returnGeometry, format: this.args.format, searchterm: this.args.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
             }
         } else {
             //handle it
             var errorMessage = "Unable to complete operation. Response code: " + statuscode;
-            this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, format: this.args.format, searchterm: this.args.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
+            this.res.render('admin_namesearch', { title: 'GeoWebServices', errorMessage: errorMessage, infoMessage: this.req.params.infoMessage, featureCollection: formatted, returnGeometry: this.args.returnGeometry, format: this.args.format, searchterm: this.args.searchterm, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Query" }] })
         }
     }
 );
@@ -464,18 +480,37 @@ function executeAdminNameSearch(searchterm, options, callback) {
 
     var sql = "";
     if (options) {
+        //TODO - clean up all of these options
         if (options.strict == true) {
-            //Try for exact match
-            sql = "select * from udf_executestrictadminsearchbyname('" + searchterm + "')";
+            if (options.returnGeometry == "yes") {
+                //Try for exact match - with geom
+                sql = "select * from udf_executestrictadminsearchbynamewithgeom('" + searchterm + "')";
+            }
+            else {
+                //Try for exact match - without geom
+                sql = "select * from udf_executestrictadminsearchbyname('" + searchterm + "')";
+            }
         }
         else {
-            //use wildcard or partial match
-            sql = "select * from udf_executeadminsearchbyname('" + searchterm + "')";
+            if (options.returnGeometry == "yes") {
+                //use wildcard or partial match - with geom
+                sql = "select * from udf_executeadminsearchbynamewithgeom('" + searchterm + "')";
+            }
+            else {
+                //use wildcard or partial match - without geom
+                sql = "select * from udf_executeadminsearchbyname('" + searchterm + "')";
+            }
         }
     }
     else {
-        //use wildcard or partial match
-        sql = "select * from udf_executeadminsearchbyname('" + searchterm + "')";
+        if (options.returnGeometry == "yes") {
+            //use wildcard or partial match - with geom
+            sql = "select * from udf_executeadminsearchbynamewithgeom('" + searchterm + "')";
+        }
+        else {
+            //use wildcard or partial match - without geom
+            sql = "select * from udf_executeadminsearchbyname('" + searchterm + "')";
+        }
     }
 
     //run it
@@ -609,6 +644,42 @@ function JSONFormatter(rows) {
 
     rows.forEach(function (row) {
         var feature = { "type": "Feature", "properties": {} };
+        feature.properties = row;
+        featureCollection.features.push(feature);
+    })
+
+    return featureCollection;
+}
+
+function geoJSONFormatter(rows, geom_fields_array) {
+    //Take in results object, return GeoJSON
+    if (!geom_fields_array) geom_fields_array = ["geom"]; //default
+
+    //Loop thru results
+    var featureCollection = { "type": "FeatureCollection", "features": [] };
+
+    rows.forEach(function (row) {
+        var feature = { "type": "Feature", "properties": {} };
+        //Depending on whether or not there is geometry properties, handle it.  If multiple geoms, use a GeometryCollection output for GeoJSON.
+
+        if (geom_fields_array && geom_fields_array.length == 1) {
+            //single geometry
+            if (row[geom_fields_array[0]]) {
+                feature.geometry = row[geom_fields_array[0]];
+                //remove the geometry property from the row object so we're just left with non-spatial properties
+                delete row[geom_fields_array[0]];
+            }
+        }
+        else if (geom_fields_array && geom_fields_array.length > 1) {
+            //if more than 1 geom, make a geomcollection property
+            feature.geometry = { "type": "GeometryCollection", "geometries": [] };
+            geom_fields_array.forEach(function (item) {
+                feature.geometry.geometries.push(row[item]);
+                //remove the geometry property from the row object so we're just left with non-spatial properties
+                delete row[item];
+            });
+        }
+
         feature.properties = row;
         featureCollection.features.push(feature);
     })

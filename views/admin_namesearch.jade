@@ -17,9 +17,25 @@ block content
 					label(for='format') Format
 				td
 					select(id='format',name='format')
-						formatlist = [ 'html', 'JSON']
+						formatlist = [ 'html', 'GeoJSON']
 							for item in formatlist
 								option #{item}
+
+			tr
+				td
+					span Return geometry
+				td
+					-if(!returnGeometry || returnGeometry == 'no'){
+						label(for='optionsRadios1') Yes
+						input(type="radio", name="returnGeometry", id="optionsRadios1", value="yes") Yes
+						label(for='optionsRadios2') No
+						input(type="radio", name="returnGeometry", id="optionsRadios2", value="no", checked="") No
+					-}else{
+						label(for='optionsRadios1') Yes
+						input(type="radio", name="returnGeometry", id="optionsRadios1", value="yes", checked="") Yes
+						label(for='optionsRadios2') No
+						input(type="radio", name="returnGeometry", id="optionsRadios2", value="no") No
+					-}
 
 		div(data-role='fieldcontain')   
 			input(type='submit',value='Submit',data-transition='fade', data-theme='c')
