@@ -43,7 +43,6 @@ app.use(express.favicon());
 app.use(express.logger('dev'));
 app.use(express.bodyParser());
 app.use(express.methodOverride());
-app.use(express.cookieParser('your secret here'));
 app.use(express.session());
 app.use(app.router);
 app.use(require('less-middleware')({ src: __dirname + '/public' }));
@@ -77,30 +76,6 @@ routes['listServices'] = function (req, res) {
     res.render('services', { baseURL: req.url, title: 'RedCross GeoWebServices', opslist: opslist, breadcrumbs: [{ link: "/services", name: "Home" }] })
 
 };
-
-//Show page interface for Admin 0 List
-routes['admin0list'] = function (req, res) {
-
-};
-
-//Show Test Page
-routes['showTestPage'] = flow.define(
-    function (req, res) {
-        this.req = req;
-        this.res = res;
-
-        //See if there is any data being POSTed
-        if (JSON.stringify(req.body) != '{}') {
-
-        }
-        else {
-            //If no arguments in the POST, render default page.
-            //Send to view
-            res.render('admin_test_page', { baseURL: req.url })
-        }
-    }
-);
-
 
 //Name search is a method that will accept a searchterm and return 0 to many results.  It will NOT return admin levels for the matched term.
 //It will simply list possible matches for the search term.  
@@ -212,7 +187,7 @@ routes['nameSearch'] = flow.define(
         //This is the callback from the GeoNamesAPI Search
         //check the result and decide what to do.
 
-        this.args.featureCollection.source = "Geonames";
+        
         this.args.breadcrumbs = [{ link: "/services", name: "Home" }, { link: "", name: "Query" }];
 
 
@@ -221,6 +196,7 @@ routes['nameSearch'] = flow.define(
             if (result && result.geonames && result.geonames.length > 0) {
 
                 this.args.featureCollection = geoJSONFormatter(result.geonames); //The page will parse the geoJson to make the HTMl
+                this.args.featureCollection.source = "Geonames";
 
                 //Render HTML page with results at bottom
                 respond(this.req, this.res, this.args);
@@ -230,6 +206,7 @@ routes['nameSearch'] = flow.define(
                 var infoMessage = "No results found.";
                 this.args.infoMessage = infoMessage;
                 this.args.featureCollection = { message: infoMessage, type: "FeatureCollection", features: [] }; //The page will parse the geoJson to make the HTMl
+                this.args.featureCollection.source = "Geonames";
 
                 //Render HTML page with results at bottom
                 respond(this.req, this.res, this.args);
@@ -326,69 +303,6 @@ routes['getAdminStack'] = flow.define(
 );
 
 
-//Get list of public base tables from postgres
-routes['listTables'] = function (req, res) {
-
-    try {
-        var client = new pg.Client(conString);
-        client.connect();
-
-        var sql = "SELECT * FROM information_schema.tables WHERE table_schema = 'public' and table_type = 'BASE TABLE' ORDER BY table_schema,table_name;"
-
-        var query = client.query(sql);
-
-        var table_list = [];
-        query.on('row', function (row) {
-            table_list.push({ table_name: row.table_name });
-        });
-
-        query.on('end', function () {
-            res.render('index', { baseURL: req.url, title: 'pGIS Server', list: table_list, breadcrumbs: [{ link: "/services", name: "Home" }] })
-            client.end();
-        });
-    } catch (e) {
-        res.end("out");
-    }
-};
-
-//List properties of the selected table, along with operations.
-routes['tableDetail'] = function (req, res) {
-
-    var client = new pg.Client(conString);
-    client.connect();
-
-    var sql = "select column_name, CASE when data_type = 'USER-DEFINED' THEN udt_name ELSE data_type end as data_type from INFORMATION_SCHEMA.COLUMNS where table_name = '" + req.params.table + "'";
-
-    var query = client.query(sql);
-
-    var table_list = [];
-    query.on('row', function (row) {
-        table_list.push(row);
-    });
-
-    query.on('end', function () {
-        res.render('table_details', { baseURL: req.url, title: 'pGIS Server', table_details: table_list, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: req.params.table }] })
-        client.end();
-    });
-};
-
-
-
-
-
-//A route to handle an error.  Pass in req, res, and the view you'd like to write to.
-routes['onError'] = function (req, res, view, message) {
-    if (view == "table_query") {
-        res.render('table_query', { title: 'pGIS Server', infoMessage: message, format: req.body.format, where: req.body.where, groupby: req.body.groupby, statsdef: req.body.statsdef, returnfields: req.body.returnfields, returnGeometry: req.body.returnGeometry, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "/services/" + req.params.table, name: req.params.table }, { link: "", name: "Query" }] })
-    }
-    else if (view == "print") {
-        res.render('print', { errorMessage: message, format: req.body.format, url: req.body.url, delay: req.body.delay, selector: req.body.selector, codeblock: req.body.codeblock, breadcrumbs: [{ link: "/services", name: "Home" }, { link: "", name: "Print" }] })
-    }
-};
-
-
-
-
 //Define Routes
 //Root Request - redirect to services page
 app.get('/', function (req, res) { res.redirect('/services') });
@@ -407,19 +321,6 @@ app.get('/services/getAdminStack', routes['getAdminStack']);
 
 //When a Query gets posted - read attributes from post and render results
 app.post('/services/getAdminStack', routes['getAdminStack']);
-
-//List Tables
-app.get('/services/list', routes['listTables']);
-
-//Table Detail
-app.get('/services/list/:table', routes['tableDetail']);
-
-//Test UI page for SalesForce Integration
-app.get('/admin_test_page', routes['showTestPage']);
-
-//Test UI page for SalesForce Integration
-app.post('/admin_test_page', routes['showTestPage']);
-
 
 
 
@@ -591,22 +492,7 @@ function executeGeoNamesAPISearch(searchterm, callback) {
     }); //send result back to calling function
 }
 
-
-function JSONFormatter(rows) {
-    //Take in results object, return JSON
-
-    //Loop thru results
-    var featureCollection = { "type": "FeatureCollection", "features": [] };
-
-    rows.forEach(function (row) {
-        var feature = { "type": "Feature", "properties": {} };
-        feature.properties = row;
-        featureCollection.features.push(feature);
-    })
-
-    return featureCollection;
-}
-
+////Take in results object, return GeoJSON (if there is geometry)
 function geoJSONFormatter(rows, geom_fields_array) {
     //Take in results object, return GeoJSON
     if (!geom_fields_array) geom_fields_array = ["geom"]; //default
@@ -732,7 +618,7 @@ function buildAdminStackSpatialQuery(wkt, datasource, level) {
 }
 
 function respond(req, res, args) {
-    //Write out a response as JSON or HTML with the appropriate arguments
+    //Write out a response as JSON or HTML with the appropriate arguments.  Add more formats here if desired
     if (!args.format || args.format == "html") {
         res.render(args.view, args)
     }
@@ -742,7 +628,6 @@ function respond(req, res, args) {
 }
 
 //Utilities
-
 function log(message) {
     //Write to console and to loggly
     logclient.log(settings.loggly.logglyKey, message);
