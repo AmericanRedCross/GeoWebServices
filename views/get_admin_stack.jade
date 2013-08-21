@@ -2,15 +2,29 @@ extends layout
 
 block content
 	p
-		| Provide either an administrative boundary ID, Level and DataSource, OR pass in a Well Known Text representation of a lat/lon
+		| Provide either:
+	ol
+		li
+			|a feature ID 
+		li	
+			|a stack ID, level and datasource, OR
+		li
+			|a Well Known Text representation of a lat/lon and datasource
+
 	form(action='',method='post')
 		table.inputTable
 
 			tr
 				td
-					label(for='uniqueid') Feature Unique ID
+					label(for='featureid') Feature ID
 				td
-					input(id='uniqueid',type='text',value=uniqueid,placeholder='uniqueid',name='uniqueid')
+					input(id='featureid',type='text',value=featureid,placeholder='featureid',name='featureid')
+
+			tr
+				td
+					label(for='stackid') Stack ID
+				td
+					input(id='stackid',type='text',value=stackid,placeholder='stackid',name='stackid')
 
 			tr
 				td

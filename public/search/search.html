@@ -140,12 +140,10 @@
             });
         }
 
-        //If user chooses an admin that has and ID (it's already in the GeoDB), lookup stack by that ID, level and source
+        //If user chooses an admin that has and ID (it's already in the GeoDB), lookup stack by the featureid
         function startGetAdminStackById(item) {
             var postArgs = {
-                uniqueid: item.unique_id,
-                adminlevel: item.level,
-                datasource: item.source,
+                featureid: item.featureid,
                 format: "GeoJSON"
             };
 
