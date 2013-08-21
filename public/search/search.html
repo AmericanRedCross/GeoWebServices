@@ -1,0 +1,237 @@
+<html>
+    <head>
+        <script src="http://codeorigin.jquery.com/jquery-2.0.3.min.js" type="text/javascript"></script>
+        <script src="json2.js" type="text/javascript"></script>
+        <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.css" />
+        <!--[if lte IE 8]>
+            <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.ie.css" />
+        <![endif]-->
+        <script src="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.js"></script>
+        <style type="text/css">
+            #adminResult, #result {
+                margin: 20px;
+            }
+
+            #adminResultitem {
+                margin-top: 20px;
+            }
+
+            table .result {
+                cursor:pointer;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div>
+            <table>
+
+                <tr>
+                    <td>
+                        Location:
+                    </td>
+                    <td>
+                        <input type="text" placeholder="" id="uxSearchterm" />
+
+                    </td>
+                </tr>
+
+            </table>
+        </div>
+        <input type="button" value="post" onclick="startNameSearch()" />
+        <div id="result">
+
+        </div>
+        <div id="adminResult">
+
+        </div>
+        <div id="map" style="width:400px;height:400px;">
+
+        </div>
+    </body>
+    <script type="text/javascript">
+        var map = L.map('map').setView([39.74739, -105], 13);
+
+        L.tileLayer('http://{s}.tile.cloudmade.com/{key}/22677/256/{z}/{x}/{y}.png', {
+            key: 'BC9A493B41014CAABB98F0471D759707'
+        }).addTo(map);
+
+        //Set 'enter' click trigger for button
+        $('#uxSearchterm').keypress(function (e) {
+            if (e.keyCode == 13)
+                startNameSearch();
+        });
+
+        //starts the name search process using the search term entered by the user.
+        function startNameSearch() {
+            var searchTerm = $("#uxSearchterm").val();
+            if (!searchTerm) {
+                $("#result").html("Please enter a search term.");
+                return;
+            }
+
+            var postArgs = {
+                searchterm: searchTerm,
+                format: "GeoJSON",
+                returnGeometry: "yes"
+            };
+
+            var url = 'http://54.213.94.50/services/nameSearch';
+
+            //Send POST, using JSONP
+            $.getJSON(url + "?callback=?", postArgs).done(function (data) {
+                handleNameSearchResponse(data);
+            }).fail(function (jqxhr, textStatus, error) {
+                var err = textStatus + ', ' + error;
+                console.log("Request Failed: " + err);
+            });
+        }
+
+        //Gets the results of the name search and writes out options for user to choose.
+        var _geoJSON = ""; //Store the GeoJSON of IRC Data
+        var _geoJSONLayer; //the leaflet layer to hold GeoJSON admin objects
+        function handleNameSearchResponse(data) {
+            $("#result").html(""); //clear name result panel
+            $("#adminResult").html(""); //clear admin panel
+
+            //Store the object for later use.
+            _geoJSON = data;
+
+
+            //Build result table
+            var table = $("<table><thead><tr><th>Name</th><th>Level</th><th>Source</th></tr></thead></table>").appendTo("#result");
+
+            //Iterate over name search matches
+            $.each(data.features, function (i, feature) {
+                var tr = $("<tr class='result'></tr>").appendTo(table);
+
+                //if source is IRC GeoDB, then do this.
+                if (data.source == "GeoDB") {
+                    //bind a click event to this tr.
+                    tr.click(function () {
+                        //send a post to the 2nd part of the web service to get the admin stacks using the ID, level and source
+                        startGetAdminStackById(feature.properties);
+                        showMapFeature(feature);
+                    });
+
+                    //Write out other information for this row for the user to see
+                    var linktd = $("<td>" + feature.properties.fullname + "</td>").appendTo(tr);
+                    $("<td>" + feature.properties.level + "</td><td>" + feature.properties.source + "</td>").appendTo(tr);
+
+                }
+                else if (data.source == "Geonames") {
+                    //bind a click event to this tr.
+                    tr.click(function () {
+                        //send a post to the 2nd part of the web service to get the admin stacks using the Lat Lng
+                        startGetAdminStackByXY(feature.properties);
+                        showMapFeature(feature);
+                    });
+
+                    //Write out other information for this row for the user to see
+                    var linktd = $("<td>" + feature.properties.name + (feature.properties.adminName1 ? ", " + feature.properties.adminName1 : "") + (feature.properties.countryName ? ", " + feature.properties.countryName : "") + "</td>").appendTo(tr);
+                    $("<td>" + feature.properties.fcodeName + "</td><td>Geonames</td>").appendTo(tr);
+                }
+
+
+                //only show a fixed amount of results
+                if (i == 10) {
+                    return false;
+                }
+            });
+        }
+
+        //If user chooses an admin that has and ID (it's already in the GeoDB), lookup stack by that ID, level and source
+        function startGetAdminStackById(item) {
+            var postArgs = {
+                uniqueid: item.unique_id,
+                adminlevel: item.level,
+                datasource: item.source,
+                format: "GeoJSON"
+            };
+
+            var url = 'http://54.213.94.50/services/getAdminStack';
+
+            //Send POST, using JSONP
+            $.getJSON(url + "?callback=?", postArgs).done(function (data) {
+                handleAdminStackResponse(data);
+            }).fail(function (jqxhr, textStatus, error) {
+                var err = textStatus + ', ' + error;
+                console.log("Request Failed: " + err);
+            });
+        }
+
+        //If user chooses to lookup stack by X,Y
+        function startGetAdminStackByXY(item) {
+            //TODO - need to cleanse this input string so users can't trigger SQL Injection attacks.  Also on server side.
+            var postArgs = {
+                wkt: "POINT(" + item.lng + " " + item.lat + ")",
+                datasource: "GADM", //For now, do hit test with GADM
+                format: "GeoJSON"
+            };
+
+            var url = 'http://54.213.94.50/services/getAdminStack';
+
+            //Send POST, using JSONP
+            $.getJSON(url + "?callback=?", postArgs).done(function (data) {
+                handleAdminStackResponse(data);
+            }).fail(function (jqxhr, textStatus, error) {
+                var err = textStatus + ', ' + error;
+                console.log("Request Failed: " + err);
+            });
+        }
+
+
+        function handleAdminStackResponse(data) {
+            $("#adminResult").html(""); //clear admin panel
+
+            //this is the object that should be sent back to SalesForce API
+
+            //iterate over Admin Stack responses
+            $.each(data.features, function (i, feature) {
+                var div = $("<div class='adminResultitem'></div>").appendTo("#adminResult");
+
+                //Write out all properties.
+                $.each(feature.properties, function (key, value) {
+                    $("<div>" + key + ": " + value + "</div>").appendTo(div);
+                });
+            });
+        }
+
+        //Display the feature on the map
+        function showMapFeature(infeature) {
+            //clear the map
+            if (_geoJSONLayer) map.removeLayer(_geoJSONLayer);
+
+            if (_geoJSON && _geoJSON.source == "GeoDB") {
+                //This will be GeoJSON.
+
+                //Set property filter
+                infeature.properties.show_on_map = true; //set flag
+
+                //load map
+                _geoJSONLayer = L.geoJson(_geoJSON.features, {
+                    filter: function (feature, layer) {
+                        return feature.properties.show_on_map;
+                    }
+                }).addTo(map);
+
+                infeature.properties.show_on_map = false; //reset flag
+
+            }
+            else if (_geoJSON && _geoJSON.source == "Geonames") {
+                //Pluck out the x,y and plot it
+                _geoJSONLayer = L.featureGroup([L.marker([infeature.properties.lat, infeature.properties.lng])]).addTo(map);
+            }
+
+
+            //zoom to layer
+            if (_geoJSONLayer) {
+                //Add layer to map
+                map.fitBounds(_geoJSONLayer.getBounds());
+                map.setZoom(10);
+            }
+
+        }
+
+	</script>
+</html>

@@ -49,7 +49,7 @@ app.use(app.router);
 app.use(require('less-middleware')({ src: __dirname + '/public' }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use("/public/javascript", express.static(path.join(__dirname, 'public/javascript')));
-app.use("/public/html_test", express.static(path.join(__dirname, 'public/html_test')));
+app.use("/public/search", express.static(path.join(__dirname, 'public/html_test')));
 app.use(function (err, req, res, next) {
     console.error(err.stack);
     log(err.message);
@@ -322,6 +322,11 @@ app.get('/services/getAdminStack', routes['getAdminStack']);
 
 //When a Query gets posted - read attributes from post and render results
 app.post('/services/getAdminStack', routes['getAdminStack']);
+
+//Route search path to static search html file
+app.get('/search', function (req, res) {
+    res.sendfile(__dirname + '/public/search/search.html');
+});
 
 
 
