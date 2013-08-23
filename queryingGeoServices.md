@@ -9,7 +9,7 @@ To support location tagging, ARC is developing a set of Geo Web Services to allo
 
 These Geo Web Services are being developed specifically to support the placename search feature of the ARC ECOS project tracking tool, though additional endpoints and functionality may be added in the future.
 
-### Sample Use Scenario ### 
+### Sample Use Scenario ###
 
 An ARC staff member is recording a new activity into ECOS. The activity location is Port-au-Prince, Haiti. The staff member opens a browser, logs into ECOS, and creates a new activity record. The staff member proceeds through the necessary steps to enter all of the project information though the web form. Included in the web form is a location field. A link next to the location field opens a new window which prompts the submission of a placename.
 
