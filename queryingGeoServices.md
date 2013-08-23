@@ -1,7 +1,7 @@
 Querying Red Cross GeoServices
 ==============================
 
-###Overview###
+### Overview ###
 
 The ECOS project of the American Red Cross (ARC) will establish a central system for tracking and reporting on the organization's global projects and activities. Projects and activities will be tagged with their location, including all levels of administrative boundaries and geographic coordinates (latitude and longitude) if available. This will enable spatial queries and spatial reporting and mapping, such as the number of programs by district. 
 
@@ -9,7 +9,7 @@ To support location tagging, ARC is developing a set of Geo Web Services to allo
 
 These Geo Web Services are being developed specifically to support the placename search feature of the ARC ECOS project tracking tool, though additional endpoints and functionality may be added in the future.
 
-###Sample Use Scenario### 
+### Sample Use Scenario ### 
 
 An ARC staff member is recording a new activity into ECOS. The activity location is Port-au-Prince, Haiti. The staff member opens a browser, logs into ECOS, and creates a new activity record. The staff member proceeds through the necessary steps to enter all of the project information though the web form. Included in the web form is a location field. A link next to the location field opens a new window which prompts the submission of a placename.
 
