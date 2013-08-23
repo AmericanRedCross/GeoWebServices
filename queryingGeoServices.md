@@ -1,8 +1,7 @@
 Querying Red Cross GeoServices
 ==============================
 
-Overview
---------
+###Overview###
 
 The ECOS project of the American Red Cross (ARC) will establish a central system for tracking and reporting on the organization's global projects and activities. Projects and activities will be tagged with their location, including all levels of administrative boundaries and geographic coordinates (latitude and longitude) if available. This will enable spatial queries and spatial reporting and mapping, such as the number of programs by district. 
 
@@ -10,16 +9,16 @@ To support location tagging, ARC is developing a set of Geo Web Services to allo
 
 These Geo Web Services are being developed specifically to support the placename search feature of the ARC ECOS project tracking tool, though additional endpoints and functionality may be added in the future.
 
-### Sample Use Scenario ###
+###Sample Use Scenario### 
 
 An ARC staff member is recording a new activity into ECOS. The activity location is Port-au-Prince, Haiti. The staff member opens a browser, logs into ECOS, and creates a new activity record. The staff member proceeds through the necessary steps to enter all of the project information though the web form. Included in the web form is a location field. A link next to the location field opens a new window which prompts the submission of a placename.
 
-The staff member then types Port-au-Prince and hits enter. Three possible matches are returned. Two matches from the GADM dataset, and one match from the GAUL dataset.  The staff member chooses one of the matches and clicks OK to close the window and return to the ECOS project information entry screen.  The activity may then be saved and submitted with the selected location tag.
+The staff member types Port-au-Prince and hits enter. Three possible matches are returned. Two matches from the GADM dataset, and one match from the GAUL dataset.  The staff member chooses one of the matches and clicks OK to close the window and return to the ECOS project information entry screen. The activity may then be saved and submitted with the selected location tag.
 
 Service Endpoints
 -----------------
 
-There are currently 2 main web service REST endpoints located on the development server [http://54.213.94.50/services](http://54.213.94.50/services)
+There are currently two main web service REST endpoints located on the development server [http://54.213.94.50/services](http://54.213.94.50/services)
 
 1. Name Search: [http://54.213.94.50/services/nameSearch](http://54.213.94.50/services/nameSearch)
 
@@ -46,11 +45,11 @@ The NameSearch web service searches the ARC Admin Boundary database in the follo
 
 - **searchterm** _(text)_: The placename to search for.  Should not include commas.  Does not search for addresses or fully qualified city/state/country strings.
 
-- **featureid** _(integer)_: If you have the featureID of a particular admin boundary, you can look up a feature using it.  If ‘searchterm’ is specified, then featureid is ignored.
+- **featureid** _(integer)_: If you have the featureID of a particular admin boundary, you can use it to look up a feature.  If ‘searchterm’ is specified, then featureid is ignored.
 
 - **format** _(string)_: Options are html or GeoJSON.  HTML will simply return a search form with results at the bottom.  Used for manual querying or testing.
 
-- **returnGeometry** _(string)_: Should the service return the coordinates of the admin polygon or not? Options are yes or no.
+- **returnGeometry** _(string)_: Options are yes or no. Specifies whether the service should return the coordinates of the admin polygon.
 
 
 #### Sample JSONP Call (jQuery 2.0.3) ####
@@ -75,7 +74,7 @@ $.getJSON(url + "?callback=?", postArgs).done(function (data) {
 
 #### Sample Results ####
 
-The GeoJSON or JSON result from this service will have 1 of 2 structures. The strucure will depend on whether a match was found from the internal GeoDB, or if a match was found from the GeoNames API.
+The GeoJSON or JSON result from this service will have one of two structures. The strucure will depend on whether a match was found from the internal GeoDB, or if a match was found from the GeoNames API.
 
 An example of a JSON result from an internal GeoDB match is:
 
@@ -138,7 +137,7 @@ Assuming one of the two results was returned, a second call can be made to the G
 
 #### Description ####
 
-The GetAdminStack endpoint is a RESTful web service that can accept GET and POST requests.  It also supports JSONP response format.  There are 3 ways to query this service:
+The GetAdminStack endpoint is a RESTful web service that can accept GET and POST requests.  It also supports JSONP response format.  There are three ways to query this service:
 
 1.	By FeatureID
 2.	By StackID, level and datasource
