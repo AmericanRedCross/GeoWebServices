@@ -356,20 +356,19 @@ var startExecuteAdminNameSearch = flow.define(
 //Strict name Search
 function executeStrictAdminNameSearch(searchterm, options, callback) {
 
-    var sql = "select * from udf_executestrictadminsearchbyname('" + searchterm + "')";
+    var sql = { text: "select * from udf_executestrictadminsearchbyname($1)", values: [searchterm] };
 
     if (options) {
         if (options.strict == true) {
             if (options.returnGeometry == "yes") {
                 //Try for exact match - with geom
-                sql = "select * from udf_executestrictadminsearchbynamewithgeom('" + searchterm + "')";
+                sql = { text: "select * from udf_executestrictadminsearchbynamewithgeom($1)", values: [searchterm] };
             }
             else {
                 //Try for exact match - without geom
-                sql = "select * from udf_executestrictadminsearchbyname('" + searchterm + "')";
+                sql = { text: "select * from udf_executestrictadminsearchbyname($1)", values: [searchterm] };
             }
         }
-
 
         //run it
         executePgQuery(sql, callback);
@@ -380,16 +379,16 @@ function executeStrictAdminNameSearch(searchterm, options, callback) {
 //loose name search
 function executeLooseAdminNameSearch(searchterm, options, callback) {
 
-    var sql = "select * from udf_executeadminsearchbyname('" + searchterm + "')";
+    var sql = { text: "select * from udf_executeadminsearchbyname($1)", values: [searchterm] };
 
     if (options) {
         if (options.returnGeometry == "yes") {
             //use wildcard or partial match - with geom
-            sql = "select * from udf_executeadminsearchbynamewithgeom('" + searchterm + "')";
+            sql = { text: "select * from udf_executeadminsearchbynamewithgeom($1)", values: [searchterm] };
         }
         else {
             //use wildcard or partial match - without geom
-            sql = "select * from udf_executeadminsearchbyname('" + searchterm + "')";
+            sql = { text: "select * from udf_executeadminsearchbyname($1)", values: [searchterm] };
         }
     }
 
@@ -403,12 +402,12 @@ function executeLooseAdminNameSearch(searchterm, options, callback) {
 function executeAdminIDSearch(featureID, options, callback) {
 
     //search by ID - without geom
-    var sql = "select * from udf_executeadminsearchbyid(" + featureID + ")"; //default
+    var sql = { text: "select * from udf_executeadminsearchbyid($1)", values: [featureID] }; //default
 
     if (options) {
         if (options.returnGeometry == "yes") {
             //search by ID - with geom
-            sql = "select * from udf_executeadminsearchbyidwithgeom(" + featureID + ")";
+            sql = { text: "select * from udf_executeadminsearchbyidwithgeom($1)", values: [featureID] };
         }
     }
 
@@ -521,7 +520,12 @@ var executeAdminStackSearchByFeatureId = flow.define(
     }
 )
 
-
+//query is a JSON object with 2 properties: text and values.
+//Example
+//    var query = {
+//        text: 'SELECT name FROM users WHERE email = $1',
+//        values: ['brian@example.com']
+//};
 function executePgQuery(query, callback) {
     var result = { status: "success", rows: [] }; //object to store results, and whether or not we encountered an error.
 
@@ -531,7 +535,7 @@ function executePgQuery(query, callback) {
     client.connect();
 
     //Log the query to the console, for debugging
-    console.log("Executing query: " + query);
+    console.log("Executing query: " + query.text + ", " + query.values);
     var query = client.query(query);
 
     //If query was successful, this is iterating thru result rows.
@@ -647,61 +651,24 @@ dsColumns["local1"] = "ogc_fid, adm0_code, adm0_name, adm1_code, adm1_name";
 
 function buildAdminStackQuery(rowid, datasource, level) {
     //build up the query to be executed
-    var query = "";
-    var table = "";
-    switch (datasource.toLowerCase()) {
-        case "gadm":
-            table = "gadm" + level;
-            query = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE ogc_fid = " + rowid;
-            break;
+    var table = datasource.toLowerCase() + level; //gadm, gaul, naturalearth, local, custom
+    var queryObj = {};
 
-        case "gaul":
-            table = "gaul" + level;
-            query = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE ogc_fid = " + rowid;
-            break;
+    queryObj.text = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE ogc_fid = $1";
+    queryObj.values = [rowid];
 
-        case "naturalearth":
-            table = "naturalearth" + level;
-            query = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE ogc_fid = " + rowid;
-            break;
-
-        case "local":
-            table = "local" + level;
-            query = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE where ogc_fid = " + rowid;
-            break;
-    }
-
-    return query;
+    return queryObj;
 }
 
 function buildAdminStackSpatialQuery(wkt, datasource, level) {
     //build the spatial query
-    var query = "";
-    var table = "";
+    var table = datasource.toLowerCase() + level; //gadm, gaul, naturalearth, local, custom
+    var queryObj = {};
 
-    switch (datasource.toLowerCase()) {
-        case "gadm":
-            table = "gadm" + level;
-            query = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE ST_Intersects(ST_GeomFromText('" + wkt + "', 4326), geom)";
-            break;
+    queryObj.text = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE ST_Intersects(ST_GeomFromText($1, 4326), geom)";
+    queryObj.values = [wkt];
 
-        case "gaul":
-            table = "gaul" + level;
-            query = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE ST_Intersects(ST_GeomFromText('" + wkt + "', 4326), geom)";
-            break;
-
-        case "naturalearth":
-            table = "naturalearth" + level;
-            query = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE ST_Intersects(ST_GeomFromText('" + wkt + "', 4326), geom)";
-            break;
-
-        case "local":
-            table = "local" + level;
-            query = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE ST_Intersects(ST_GeomFromText('" + wkt + "', 4326), geom)";
-            break;
-    }
-
-    return query;
+    return queryObj;
 }
 
 function respond(req, res, args) {
