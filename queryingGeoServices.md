@@ -35,13 +35,13 @@ There is also a search page that will be called from ECOS that will allow the us
 The Name Search endpoint is a RESTful web service that can accept GET and POST requests.  It also supports JSONP response format.
 Parameters
 
-- **searchterm** (_text_): The placename to search for.  Should not include commas.  Does not search for addresses or fully qualified city/state/country strings.
+- **searchterm** _(text)_: The placename to search for.  Should not include commas.  Does not search for addresses or fully qualified city/state/country strings.
 
-- **featureid** (_integer_): If you have the featureID of a particular admin boundary, you can look up a feature using it.  If ‘searchterm’ is specified, then featureid is ignored.
+- **featureid** _(integer)_: If you have the featureID of a particular admin boundary, you can look up a feature using it.  If ‘searchterm’ is specified, then featureid is ignored.
 
-- **format** (_string_): Options are html or GeoJSON.  HTML will simply return a search form with results at the bottom.  Used for manual querying or testing.
+- **format** _(string)_: Options are html or GeoJSON.  HTML will simply return a search form with results at the bottom.  Used for manual querying or testing.
 
-- **returnGeometry** (_string_): Should the service return the coordinates of the admin polygon or not? Options are yes or no.
+- **returnGeometry** _(string)_: Should the service return the coordinates of the admin polygon or not? Options are yes or no.
 
 #### Description ####
 
@@ -55,7 +55,7 @@ The NameSearch web service searches the RedCross Admin Boundary database in the 
 
 #### Sample JSONP Call (jQuery 2.0.3) ####
 
-'''javascript
+```javascript
 var postArgs = {
 	searchterm: "dallas",
 	format: "GeoJSON",
@@ -71,7 +71,7 @@ $.getJSON(url + "?callback=?", postArgs).done(function (data) {
 	var err = textStatus + ', ' + error;
 	console.log("Request Failed: " + err);
 });
-'''
+```
 
 #### Results ####
 
@@ -79,7 +79,7 @@ The GeoJSON or JSON result from this service will have 1 of 2 structures, depend
 
 An example of a JSON result from a GeoDB match is:
 
-'''json
+```json
 {
 	"type": "FeatureCollection",
 	"features": [
@@ -95,15 +95,15 @@ An example of a JSON result from a GeoDB match is:
 				"year": "2012",
 				"fullname": "Colima, Mexico"
 			}
-		}
+		}`=
 	],
 	"source": "GeoDB"
 }
-'''
+```
 
 An example of a JSON result from Geonames is:
 
-'''json
+```json
 {
 	"type": "FeatureCollection",
 	"features": [
@@ -130,7 +130,7 @@ An example of a JSON result from Geonames is:
 	],
 	"source": "Geonames"
 }
-'''
+```
 
 Assuming one of the two results was returned, a 2nd call can be made to the GetAdminStack web service to actually retrieve the full hierarchy of administrative boundaries for the location returned from this web service.
 
@@ -144,21 +144,21 @@ The GetAdminStack endpoint is a RESTful web service that can accept GET and POST
 
 #### Parameters ####
 
-- **featureid** (_integer_): If the featureID is available from the NameSearch web service, it can be used by itself to retrieve the full administrative boundary stack.
+- **featureid** _(integer)_: If the featureID is available from the NameSearch web service, it can be used by itself to retrieve the full administrative boundary stack.
 
-- **stackid** (_integer_): StackID is available as a property of the NameSearch web service.  It can be used in conjunction with the level and datasource input parameters to retrieve a particular admin stack.
+- **stackid** _(integer)_: StackID is available as a property of the NameSearch web service.  It can be used in conjunction with the level and datasource input parameters to retrieve a particular admin stack.
 
-- **adminlevel** (_integer_): The level corresponding to the stackid and datasource. 
+- **adminlevel** _(integer)_: The level corresponding to the stackid and datasource. 
 
-- **datasource** (_string_): The raw dataset from which the stack originated. Options are GAUL, GADM and NaturalEarth.
+- **datasource** _(string)_: The raw dataset from which the stack originated. Options are GAUL, GADM and NaturalEarth.
 
-- **format** (_string_): Options are html or GeoJSON.  HTML will simply return a search form with results at the bottom.  Used for manual querying or testing.
+- **format** _(string)_: Options are html or GeoJSON.  HTML will simply return a search form with results at the bottom.  Used for manual querying or testing.
 
-- **wkt** (_string_): A Well Known Text representation of a feature.  Could be any valid geometry including point, line, polygon or multipoint. Example: POINT(85.341 25.811) (X,Y)
+- **wkt** _(string)_: A Well Known Text representation of a feature.  Could be any valid geometry including point, line, polygon or multipoint. Example: POINT(85.341 25.811) (X,Y)
 
 #### Sample JSONP Call (jQuery 2.0.3) ####
 
-'''javascript
+```javascript
 var postArgs = {
 	featureid: 544785,
 	format: "GeoJSON"	
@@ -173,7 +173,7 @@ $.getJSON(url + "?callback=?", postArgs).done(function (data) {
 	var err = textStatus + ', ' + error;
 	console.log("Request Failed: " + err);
 });
-'''
+```
 
 #### Results ####
 
@@ -181,7 +181,7 @@ A JSON result will have the following structure, but may differ depending on how
 
 For example, this stack has admin levels 0 through 5:
 
-'''json
+```json
 {
 	"type": "FeatureCollection",
 	"features": [
@@ -205,7 +205,7 @@ For example, this stack has admin levels 0 through 5:
 		}
 	]
 }
-'''
+```
 
 Other results may have fewer or more admin levels depending on the datasource.
 
