@@ -1,22 +1,20 @@
-Querying RedCross GeoServices
-=============================
+Querying Red Cross GeoServices
+==============================
 
 Overview
 --------
 
-The Red Cross has undertaken a project called ECOS with the goal of having a central system for tracking and reporting on their global projects and activities.  In order to enable spatial queries and spatial reporting and mapping (# projects by district for example), projects and activities need to be tagged with their location, including all levels of administrative boundaries and lat/lng where available.
+The ECOS project of the American Red Cross (ARC) will establish a central system for tracking and reporting on the organization's global projects and activities. Projects and activities will be tagged with their location, including all levels of administrative boundaries and geographic coordinates (latitude and longitude) if available. This will enable spatial queries and spatial reporting and mapping, such as the number of programs by district. 
 
-To that end, Red Cross has begun developing a set of Geo Web Services to allow for searching and retrieval of an entire hierarchy of administrative boundaries from a variety of global administrative datasets including GADM, GAUL, NaturalEarth and GeoNames. In addition, custom Red Cross boundaries (regional chapter boundaries for example) and local administrative boundaries will be available if requested.
+To support location tagging, ARC is developing a set of Geo Web Services to allow for searching and retrieval of an entire hierarchy of administrative boundaries from a variety of global administrative datasets including GADM, GAUL, NaturalEarth, and GeoNames. In addition, custom Red Cross boundaries (regional chapter boundaries for example) and local administrative boundaries will be available if requested.
 
-These services were created specifically to support the placename search feature of the Red Cross’ ECOS project tracking tool, though additional endpoints and functionality may be added in the future.
+These Geo Web Services are being developed specifically to support the placename search feature of the ARC ECOS project tracking tool, though additional endpoints and functionality may be added in the future.
 
-Sample Workflow
----------------
-Jim is a Red Cross employee who needs to enter a new activity into ECOS.  The activity is happening in Port-au-Prince, Haiti.  
+### Sample Use Scenario ###
 
-Jim opens his browser and logs into ECOS, then clicks to create a new activity.  He enters all of the project information step by step into the web form.  At the bottom of the form is a location field.  He clicks the link next to it and a new window opens, which then prompts him to enter a placename.
+An ARC staff member is recording a new activity into ECOS. The activity location is Port-au-Prince, Haiti. The staff member opens a browser, logs into ECOS, and creates a new activity record. The staff member proceeds through the necessary steps to enter all of the project information though the web form. Included in the web form is a location field. A link next to the location field opens a new window which prompts the submission of a placename.
 
-Jim types Port-au-Prince and hits enter.  3 possible matches are returned, 2 from the GADM dataset, and 1 from the GAUL dataset.  He chooses the level 3 option and clicks OK.  The window closes which leaves him back at the ECOS data entry screen.  He then clicks the ‘submit’ button and the activity is saved.
+The staff member then types Port-au-Prince and hits enter. Three possible matches are returned. Two matches from the GADM dataset, and one match from the GAUL dataset.  The staff member chooses one of the matches and clicks OK to close the window and return to the ECOS project information entry screen.  The activity may then be saved and submitted with the selected location tag.
 
 Service Endpoints
 -----------------
@@ -27,13 +25,24 @@ There are currently 2 main web service REST endpoints located on the development
 
 2. Get Admin Stack: [http://54.213.94.50/services/getAdminStack](http://54.213.94.50/services/getAdminStack)
 
-There is also a search page that will be called from ECOS that will allow the user to do the placename search and send the results back to ECOS.  This page is located at [http://54.213.94.50/search](http://54.213.94.50/search).
+__Note:__ There is also a search page that will be called from ECOS that will allow the user to do the placename search and send the results back to ECOS.  This page is located at [http://54.213.94.50/search](http://54.213.94.50/search).
 
 
 ### Name Search ###
 
+#### Description ####
+
 The Name Search endpoint is a RESTful web service that can accept GET and POST requests.  It also supports JSONP response format.
-Parameters
+
+The NameSearch web service searches the ARC Admin Boundary database in the following manner:
+
+1.	An exact match search is run against all internal datasources.   If an exact match is found, then a result is returned. If no exact match is found:
+
+2.	A ‘loose’ search is run against all internal datasources.  For example, the searchterm ‘King’ might return King County, Washington and Kingston, Jamaica and any other admin boundary starting with the word King.  If no loose match is found:
+
+3.	The searchterm is sent to the [Geonames](http://www.geonames.org/) API.  Geonames will usually find a result, which will then be returned.
+
+#### Parameters ####
 
 - **searchterm** _(text)_: The placename to search for.  Should not include commas.  Does not search for addresses or fully qualified city/state/country strings.
 
@@ -43,15 +52,6 @@ Parameters
 
 - **returnGeometry** _(string)_: Should the service return the coordinates of the admin polygon or not? Options are yes or no.
 
-#### Description ####
-
-The NameSearch web service searches the RedCross Admin Boundary database in the following manner:
-
-1.	An exact match search is run against all internal datasources.   If an exact match is found, then a result is returned. If no exact match is found:
-
-2.	A ‘loose’ search is run against all internal datasources.  For example, the searchterm ‘King’ might return King County, Washington and Kingston, Jamaica and any other admin boundary starting with the word King.  If no loose match is found:
-
-3.	The searchterm is sent to the [Geonames](http://www.geonames.org/) API.  Geonames will usually find a result, which will then be returned.
 
 #### Sample JSONP Call (jQuery 2.0.3) ####
 
@@ -73,11 +73,11 @@ $.getJSON(url + "?callback=?", postArgs).done(function (data) {
 });
 ```
 
-#### Results ####
+#### Sample Results ####
 
-The GeoJSON or JSON result from this service will have 1 of 2 structures, depending on whether a match was found from the internal GeoDB, or if a match was found from the GeoNames API.
+The GeoJSON or JSON result from this service will have 1 of 2 structures. The strucure will depend on whether a match was found from the internal GeoDB, or if a match was found from the GeoNames API.
 
-An example of a JSON result from a GeoDB match is:
+An example of a JSON result from an internal GeoDB match is:
 
 ```json
 {
@@ -95,13 +95,13 @@ An example of a JSON result from a GeoDB match is:
 				"year": "2012",
 				"fullname": "Colima, Mexico"
 			}
-		}`=
+		}
 	],
 	"source": "GeoDB"
 }
 ```
 
-An example of a JSON result from Geonames is:
+An example of a JSON result from the Geonames API is:
 
 ```json
 {
@@ -132,9 +132,11 @@ An example of a JSON result from Geonames is:
 }
 ```
 
-Assuming one of the two results was returned, a 2nd call can be made to the GetAdminStack web service to actually retrieve the full hierarchy of administrative boundaries for the location returned from this web service.
+Assuming one of the two results was returned, a second call can be made to the GetAdminStack web service to actually retrieve the full hierarchy of administrative boundaries for the location returned from this web service.
 
 ### Get Admin Stack ###
+
+#### Description ####
 
 The GetAdminStack endpoint is a RESTful web service that can accept GET and POST requests.  It also supports JSONP response format.  There are 3 ways to query this service:
 
@@ -175,11 +177,9 @@ $.getJSON(url + "?callback=?", postArgs).done(function (data) {
 });
 ```
 
-#### Results ####
+#### Sample Results ####
 
-A JSON result will have the following structure, but may differ depending on how ‘deep’ the administrative stack is.
-
-For example, this stack has admin levels 0 through 5:
+The structure of a JSON result will depend on how ‘deep’ the administrative stack is. The number of admin levels for a result will depend on the datasource. An example of a JSON result with admin levels 0 through 5 is:
 
 ```json
 {
@@ -206,8 +206,3 @@ For example, this stack has admin levels 0 through 5:
 	]
 }
 ```
-
-Other results may have fewer or more admin levels depending on the datasource.
-
-
-
