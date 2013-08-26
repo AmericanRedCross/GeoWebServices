@@ -136,8 +136,6 @@ routes['proxyRequest'] = function (req, res) {
         res.send(500, 'Proxy got no arguments');
         log('Proxy got no arguments');
     }
-
-
 };
 
 
@@ -423,20 +421,16 @@ function executeStrictAdminNameSearch(searchterm, options, callback) {
     var sql = { text: "select * from udf_executestrictadminsearchbyname($1)", values: [searchterm] };
 
     if (options) {
-        if (options.strict == true) {
-            if (options.returnGeometry == "yes") {
-                //Try for exact match - with geom
-                sql = { text: "select * from udf_executestrictadminsearchbynamewithgeom($1)", values: [searchterm] };
-            }
-            else {
-                //Try for exact match - without geom
-                sql = { text: "select * from udf_executestrictadminsearchbyname($1)", values: [searchterm] };
-            }
+        if (options.returnGeometry == "yes") {
+            //Try for exact match - with geom
+            sql = { text: "select * from udf_executestrictadminsearchbynamewithgeom($1)", values: [searchterm] };
         }
-
+        else {
+            //Try for exact match - without geom
+            sql = { text: "select * from udf_executestrictadminsearchbyname($1)", values: [searchterm] };
+        }
         //run it
         executePgQuery(sql, callback);
-
     }
 }
 

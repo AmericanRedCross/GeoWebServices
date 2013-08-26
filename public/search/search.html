@@ -122,15 +122,19 @@
         }
     });
 
-    var _chosenFeature; //Store the feature so we can send it back.
-
-    //sendBackResult
+    var _chosenFeature; //Store the clicked on feature so we can send it back.
 
     //starts the name search process using the search term entered by the user.
     function startNameSearch() {
         var searchTerm = $("#uxSearchterm").val();
         if (!searchTerm) {
             $("#result").html("Please enter a search term.");
+            return;
+        }
+
+        //Don't allow commas
+        if (searchTerm.indexOf(",") > -1) {
+            $("#result").html("Please enter a placename with no commas.  <span style='font-style:italic'>example: Port-au-Prince</span>");
             return;
         }
         
@@ -327,7 +331,7 @@
         //retrieve the returnUrl parameter from the querystring.
         //Assume it's there.
         if (urlParams && urlParams.returnUrl) {
-            var url = "/proxy?" + urlParams.returnUrl;//encodeURIComponent(urlParams.returnUrl);
+            var url = "/proxy?returnUrl=" + urlParams.returnUrl;//encodeURIComponent(urlParams.returnUrl);
             var args = {};
             if (featureid) {
                 args.featureid = featureid;
@@ -345,6 +349,7 @@
             })
             .fail(function () {
                 //Display a friendly message
+
             });
         }
         else {
