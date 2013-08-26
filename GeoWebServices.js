@@ -8,11 +8,13 @@ var express = require('express')
   , routes = require('./routes')
   , user = require('./routes/user')
   , http = require('http')
+  , url = require('url')
   , path = require('path')
   , flow = require('flow')
   , rest = require('./custom_modules/getJSON')
   , settings = require('./settings')
-  , loggly = require('loggly');
+  , loggly = require('loggly')
+  , httpProxy = require('http-proxy');
 
 var app = express();
 
@@ -21,6 +23,9 @@ var routes = [];
 
 //PostGres Connection String
 var conString = "postgres://" + settings.pg.username + ":" + settings.pg.password + "@" + settings.pg.server + ":" + settings.pg.port + "/" + settings.pg.database;
+
+//Init Proxy
+var proxy = new httpProxy.RoutingProxy(settings.proxyOptions);
 
 //Configure Loggly (logging API)
 var config = {
@@ -49,7 +54,8 @@ app.use(app.router);
 app.use(require('less-middleware')({ src: __dirname + '/public' }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use("/public/javascript", express.static(path.join(__dirname, 'public/javascript')));
-app.use("/public/search", express.static(path.join(__dirname, 'public/html_test')));
+app.use("/public/images", express.static(path.join(__dirname, 'public/images')));
+
 app.use(function (err, req, res, next) {
     console.error(err.stack);
     log(err.message);
@@ -77,6 +83,63 @@ routes['listServices'] = function (req, res) {
     res.render('services', { baseURL: req.url, title: 'RedCross GeoWebServices', opslist: opslist, breadcrumbs: [{ link: "/services", name: "Home" }] })
 
 };
+
+//handles requests to the proxy
+routes['proxyRequest'] = function (req, res) {
+    //Holds the arguments passed
+    var args = {};
+
+    //Grab POST or QueryString args depending on type
+    if (req.method.toLowerCase() == "post") {
+        //If a post, then arguments will be members of the this.req.body property
+        args = req.body;
+    }
+    else if (req.method.toLowerCase() == "get") {
+        //If request is a get, then args will be members of the this.req.query property
+        args = req.query;
+    }
+
+    if (args.returnUrl) {
+        //Get the returnUrl parameter and parse it.
+        //Assumes returnUrl is a fully qualified URL - http://www.foo.com
+        var urlObj = url.parse(args.returnUrl);
+
+        //Check the white list of allowed domains
+        var hostArray = urlObj.host.split("."); //break up url domain by periods
+        var domain = hostArray.slice(-2, hostArray.length).join("."); //put together the last 2 elements, so we get foo.com
+
+        //check the domain against the white list.
+        if (settings.proxyOptions.allowedDomains.indexOf(domain) > -1) {
+            //Domain is OK.
+            //update the reqest headers.
+            req.headers.host = urlObj.host;
+            req.url = urlObj.path;
+
+            log("Requested Host in Proxy: " + urlObj.host);
+
+            //Make the request
+            proxy.proxyRequest(req, res, {
+                host: urlObj.host,
+                port: urlObj.port || 80,
+                enable: { xforward: true }
+            });
+        }
+        else {
+            //Domain is not ok.
+            res.send(500, 'The domain - ' + domain + ' - is not allowed by the proxy.');
+            log('The domain - ' + domain + ' - is not allowed by the proxy.');
+        }
+    }
+    else {
+        //No return URL specified
+        //Domain is not ok.
+        res.send(500, 'Proxy got no arguments');
+        log('Proxy got no arguments');
+    }
+
+
+};
+
 
 //Name search is a method that will accept a searchterm and return 0 to many results.  It will NOT return admin levels for the matched term.
 //It will simply list possible matches for the search term.  
@@ -249,7 +312,8 @@ app.get('/search', function (req, res) {
     res.sendfile(__dirname + '/public/search/search.html');
 });
 
-
+//Proxy for cross domain calls
+app.all('/proxy', routes['proxyRequest']);
 
 //Start listening
 http.createServer(app).listen(app.get('port'), app.get('ipaddr'), function () {
