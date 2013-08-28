@@ -144,10 +144,11 @@
         var postArgs = {
             searchterm: searchTerm,
             format: "GeoJSON",
-            returnGeometry: "yes"
+            returnGeometry: "no"
         };
 
-        var url = 'http://54.213.94.50/services/nameSearch';
+        //var url = 'http://54.213.94.50/services/nameSearch';
+        var url = 'http://localhost:3000/services/nameSearch';
 
         //Send POST, using JSONP
         $.getJSON(url + "?callback=?", postArgs).done(function (data) {
@@ -167,10 +168,6 @@
         $("#result").html(""); //clear name result panel
         $("#adminResult").html(""); //clear admin panel
 
-        //Store the object for later use.
-        _geoJSON = data;
-
-
         //Build result table
         var table = $("<table><thead><tr><th>Name</th><th>Level</th><th>Source</th></tr></thead></table>").appendTo("#result");
 
@@ -185,7 +182,7 @@
                     //send a post to the 2nd part of the web service to get the admin stacks using the ID, level and source
                     _chosenFeature = feature;
                     startGetAdminStackById(feature.properties);
-                    showMapFeature(feature);
+                    //showMapFeature(feature);
                 });
 
                 //Write out other information for this row for the user to see
@@ -199,7 +196,7 @@
                     //send a post to the 2nd part of the web service to get the admin stacks using the Lat Lng
                     _chosenFeature = feature;
                     startGetAdminStackByXY(feature.properties);
-                    showMapFeature(feature);
+                    //showMapFeature(feature);
                 });
 
                 //Write out other information for this row for the user to see
@@ -225,7 +222,7 @@
         $("#adminResult").html("");
         var loading = new loader("#adminResult");
 
-        var url = 'http://54.213.94.50/services/getAdminStack';
+        var url = 'http://localhost:3000/services/getAdminStack';
 
         //Send POST, using JSONP
         $.getJSON(url + "?callback=?", postArgs).done(function (data) {
@@ -245,7 +242,7 @@
             format: "GeoJSON"
         };
 
-        var url = 'http://54.213.94.50/services/getAdminStack';
+        var url = 'http://localhost:3000/services/getAdminStack';
 
         //Send POST, using JSONP
         $.getJSON(url + "?callback=?", postArgs).done(function (data) {
@@ -261,6 +258,10 @@
         $("#stackWrapper").css({"display": "block"});
         $("#adminResult").html(""); //clear admin panel
 
+        //Store the object for later use.
+        _geoJSON = data;
+        _geoJSON.source = "GeoDB";
+
         //iterate over Admin Stack responses
         $.each(data.features, function (i, feature) {
             var div = $("<div class='adminResultitem'></div>").appendTo("#adminResult");
@@ -269,6 +270,8 @@
             $.each(feature.properties, function (key, value) {
                 $("<div>" + key + ": " + value + "</div>").appendTo(div);
             });
+
+            showMapFeature(feature);
         });
     }
 
@@ -281,16 +284,18 @@
             //This will be GeoJSON.
 
             //Set property filter
-            infeature.properties.show_on_map = true; //set flag
+            //infeature.properties.show_on_map = true; //set flag
 
             //load map
-            _geoJSONLayer = L.geoJson(_geoJSON.features, {
-                filter: function (feature, layer) {
-                    return feature.properties.show_on_map;
-                }
-            }).addTo(map);
+            //_geoJSONLayer = L.geoJson(_geoJSON.features, {
+            //    filter: function (feature, layer) {
+            //        return feature.properties.show_on_map;
+            //    }
+            //}).addTo(map);
 
-            infeature.properties.show_on_map = false; //reset flag
+            _geoJSONLayer = L.geoJson(_geoJSON.features).addTo(map);
+
+            //infeature.properties.show_on_map = false; //reset flag
 
         }
         else if (_geoJSON && _geoJSON.source == "Geonames") {
@@ -302,8 +307,9 @@
         //zoom to layer
         if (_geoJSONLayer) {
             //Add layer to map
-            map.fitBounds(_geoJSONLayer.getBounds());
-            map.setZoom(10);
+            var bounds = _geoJSONLayer.getBounds();
+            map.fitBounds(bounds);
+            //map.setZoom(10);
         }
 
     }

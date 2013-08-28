@@ -652,7 +652,6 @@ function geoJSONFormatter(rows, geom_fields_array) {
     rows.forEach(function (row) {
         var feature = { "type": "Feature", "properties": {} };
         //Depending on whether or not there is geometry properties, handle it.  If multiple geoms, use a GeometryCollection output for GeoJSON.
-
         if (geom_fields_array && geom_fields_array.length == 1) {
             //single geometry
             if (row[geom_fields_array[0]]) {
@@ -689,23 +688,23 @@ dsLevels["local"] = 2;
 var dsColumns = {};
 
 //Columns aliased to be consistent between data sources.
-dsColumns["gadm0"] = "ogc_fid as id, id_0 as adm0_code, name_0 as adm0_name";
-dsColumns["gadm1"] = "ogc_fid as id, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name";
-dsColumns["gadm2"] = "ogc_fid as id, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name";
-dsColumns["gadm3"] = "ogc_fid as id, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name, id_3 as adm3_code, name_3 as adm3_name";
-dsColumns["gadm4"] = "ogc_fid as id, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name, id_3 as adm3_code, name_3 as adm3_name, id_4 as adm4_code, name_4 as adm4_name";
-dsColumns["gadm5"] = "ogc_fid as id, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name, id_3 as adm3_code, name_3 as adm3_name, id_4 as adm4_code, name_4 as adm4_name, id_5 as adm5_code, name_5 as adm5_name";
+dsColumns["gadm0"] = "ST_AsGeoJSON(geom_simplify_high) as geom, ogc_fid as id, id_0 as adm0_code, name_0 as adm0_name";
+dsColumns["gadm1"] = "ST_AsGeoJSON(geom) as geom, ogc_fid as id, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name";
+dsColumns["gadm2"] = "ST_AsGeoJSON(geom) as geom, ogc_fid as id, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name";
+dsColumns["gadm3"] = "ST_AsGeoJSON(geom) as geom, ogc_fid as id, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name, id_3 as adm3_code, name_3 as adm3_name";
+dsColumns["gadm4"] = "ST_AsGeoJSON(geom) as geom, ogc_fid as id, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name, id_3 as adm3_code, name_3 as adm3_name, id_4 as adm4_code, name_4 as adm4_name";
+dsColumns["gadm5"] = "ST_AsGeoJSON(geom) as geom, ogc_fid as id, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name, id_3 as adm3_code, name_3 as adm3_name, id_4 as adm4_code, name_4 as adm4_name, id_5 as adm5_code, name_5 as adm5_name";
 
-dsColumns["gaul0"] = "ogc_fid as id, adm0_code, adm0_name";
-dsColumns["gaul1"] = "ogc_fid as id, adm0_code, adm0_name, adm1_code, adm1_name";
-dsColumns["gaul2"] = "ogc_fid as id, adm0_code, adm0_name, adm1_code, adm1_name, adm2_code, adm2_name";
+dsColumns["gaul0"] = "ST_AsGeoJSON(geom) as geom,ogc_fid as id, adm0_code, adm0_name";
+dsColumns["gaul1"] = "ST_AsGeoJSON(geom) as geom,ogc_fid as id, adm0_code, adm0_name, adm1_code, adm1_name";
+dsColumns["gaul2"] = "ST_AsGeoJSON(geom) as geom,ogc_fid as id, adm0_code, adm0_name, adm1_code, adm1_name, adm2_code, adm2_name";
 
-dsColumns["naturalearth0"] = "ogc_fid as id, adm0_a3 as adm0_code, name as adm0_name";
-dsColumns["naturalearth1"] = "ogc_fid as id, adm0_a3 as adm0_code, admin as adm0_name, name as adm1_code, name as adm1_name"; //no adm1 code
+dsColumns["naturalearth0"] = "ST_AsGeoJSON(geom) as geom,ogc_fid as id, adm0_a3 as adm0_code, name as adm0_name";
+dsColumns["naturalearth1"] = "ST_AsGeoJSON(geom) as geom,ogc_fid as id, adm0_a3 as adm0_code, admin as adm0_name, name as adm1_code, name as adm1_name"; //no adm1 code
 
 //TODO
-dsColumns["local0"] = "ogc_fid, adm0_code, adm0_name";
-dsColumns["local1"] = "ogc_fid, adm0_code, adm0_name, adm1_code, adm1_name";
+dsColumns["local0"] = "ST_AsGeoJSON(geom) as geom,ogc_fid, adm0_code, adm0_name";
+dsColumns["local1"] = "ST_AsGeoJSON(geom) as geom,ogc_fid, adm0_code, adm0_name, adm1_code, adm1_name";
 
 function buildAdminStackQuery(rowid, datasource, level) {
     //build up the query to be executed
