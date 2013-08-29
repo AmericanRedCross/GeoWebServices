@@ -95,7 +95,9 @@
 </body>
 <script type="text/javascript">
     var map = L.map('map').setView([39.74739, -105], 13);
-    
+    //var _server = "localhost:3000";
+    var _server = "54.213.94.50";
+
 
     L.tileLayer('http://{s}.tile.cloudmade.com/{key}/22677/256/{z}/{x}/{y}.png', {
         key: 'BC9A493B41014CAABB98F0471D759707'
@@ -147,7 +149,7 @@
             returnGeometry: "no"
         };
 
-        var url = 'http://54.213.94.50/services/nameSearch';
+        var url = 'http://' + _server + '/services/nameSearch';
 
         //Send POST, using JSONP
         $.getJSON(url + "?callback=?", postArgs).done(function (data) {
@@ -221,7 +223,7 @@
         $("#adminResult").html("");
         var loading = new loader("#adminResult");
 
-        var url = 'http://54.213.94.50/services/getAdminStack';
+        var url = 'http://' + _server + '/services/getAdminStack';
 
         //Send POST, using JSONP
         $.getJSON(url + "?callback=?", postArgs).done(function (data) {
@@ -241,7 +243,7 @@
             format: "GeoJSON"
         };
 
-        var url = 'http://54.213.94.50/services/getAdminStack';
+        var url = 'http://' + _server + '/services/getAdminStack';
 
         //Send POST, using JSONP
         $.getJSON(url + "?callback=?", postArgs).done(function (data) {

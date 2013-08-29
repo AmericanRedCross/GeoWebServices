@@ -711,7 +711,7 @@ function buildAdminStackQuery(rowid, datasource, level) {
     var table = datasource.toLowerCase() + level; //gadm, gaul, naturalearth, local, custom
     var queryObj = {};
 
-    queryObj.text = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE ogc_fid = $1";
+    queryObj.text = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE guid = $1";
     queryObj.values = [rowid];
 
     return queryObj;
