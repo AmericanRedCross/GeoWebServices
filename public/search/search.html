@@ -282,21 +282,7 @@
 
         if (_geoJSON && _geoJSON.source == "GeoDB") {
             //This will be GeoJSON.
-
-            //Set property filter
-            //infeature.properties.show_on_map = true; //set flag
-
-            //load map
-            //_geoJSONLayer = L.geoJson(_geoJSON.features, {
-            //    filter: function (feature, layer) {
-            //        return feature.properties.show_on_map;
-            //    }
-            //}).addTo(map);
-
             _geoJSONLayer = L.geoJson(_geoJSON.features).addTo(map);
-
-            //infeature.properties.show_on_map = false; //reset flag
-
         }
         else if (_geoJSON && _geoJSON.source == "Geonames") {
             //Pluck out the x,y and plot it
@@ -306,12 +292,9 @@
 
         //zoom to layer
         if (_geoJSONLayer) {
-            //Add layer to map
             var bounds = _geoJSONLayer.getBounds();
             map.fitBounds(bounds);
-            //map.setZoom(10);
         }
-
     }
 
 
@@ -337,26 +320,17 @@
         //retrieve the returnUrl parameter from the querystring.
         //Assume it's there.
         if (urlParams && urlParams.returnUrl) {
-            var url = "/proxy?returnUrl=" + urlParams.returnUrl;//encodeURIComponent(urlParams.returnUrl);
+            var url = urlParams.returnUrl + "?"; //encodeURIComponent(urlParams.returnUrl);
             var args = {};
             if (featureid) {
-                args.featureid = featureid;
+                url += "featureid=" + featureid;
             }
             else {
-                args.x = x;
-                args.y = y;
+                url += "x=" + x + "&y=" + y;
             }
 
-            //Send it
-            var jqxhr = $.get(url, args)
-            .done(function () {
-                //If successful, then we're done.  Close the page.
-                window.close();
-            })
-            .fail(function () {
-                //Display a friendly message
-
-            });
+            //redirect
+            window.location = url;
         }
         else {
             //What do do if we don't get a return Url?
