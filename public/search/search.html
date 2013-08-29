@@ -147,8 +147,8 @@
             returnGeometry: "no"
         };
 
-        //var url = 'http://54.213.94.50/services/nameSearch';
-        var url = 'http://localhost:3000/services/nameSearch';
+        var url = 'http://54.213.94.50/services/nameSearch';
+        //var url = 'http://localhost:3000/services/nameSearch';
 
         //Send POST, using JSONP
         $.getJSON(url + "?callback=?", postArgs).done(function (data) {
@@ -222,7 +222,7 @@
         $("#adminResult").html("");
         var loading = new loader("#adminResult");
 
-        var url = 'http://localhost:3000/services/getAdminStack';
+        var url = 'http://54.213.94.50/services/getAdminStack';
 
         //Send POST, using JSONP
         $.getJSON(url + "?callback=?", postArgs).done(function (data) {
@@ -242,7 +242,7 @@
             format: "GeoJSON"
         };
 
-        var url = 'http://localhost:3000/services/getAdminStack';
+        var url = 'http://54.213.94.50/services/getAdminStack';
 
         //Send POST, using JSONP
         $.getJSON(url + "?callback=?", postArgs).done(function (data) {
