@@ -537,7 +537,7 @@ function executeAdminStackSearch(searchObject, callback) {
             if (level >= 0) {
                 //Do Hit Test, starting with lowest available admin level
                 log("In hit test loop.  checking level " + level);
-                sql = buildAdminStackSpatialQuery(searchObject.wkt, searchObject.datasource, level);
+                sql = buildAdminStackSpatialQuery(searchObject.wkt, searchObject.datasource, level, searchObject.returnGeometry);
                 executePgQuery(sql, function (result) {
                     if (result.status == "success") {
                         //we found a match, break out.
