@@ -232,20 +232,44 @@ routes['getAdminStack'] = flow.define(
                 return;
             }
             else if (this.args.stackid && this.args.adminlevel && this.args.datasource) {
-                //Run the search
-                searchObj.stackid = this.args.stackid;
-                searchObj.adminlevel = this.args.adminlevel;
-                searchObj.datasource = this.args.datasource;
-                searchObj.isSpatial = false;
+                //Check to see if the datasource was valid
+                if (settings.dsColumns[this.args.datasource.toLowerCase() + this.args.adminlevel]) {
+                    //Set up search parameters
+                    searchObj.stackid = this.args.stackid;
+                    searchObj.adminlevel = this.args.adminlevel;
+                    searchObj.datasource = this.args.datasource;
+                    searchObj.isSpatial = false;
+                }
+                else {
+                    //Couldn't find this datasource in the settings file. Exit.
+                    this.args.errorMessage = this.args.datasource.toLowerCase() + this.args.adminlevel + " was not found. Try GADM0, GAUL1 or NaturalEarth0, for example";
+                    this.args.featureCollection = { message: this.args.errorMessage, type: "FeatureCollection", features: [] };
+
+                    //Render HTML page with results at bottom
+                    respond(this.req, this.res, this.args);
+                    return;
+                }
             }
             else {
                 //did they pass in GEOM And Datasource and Level?
                 if (this.args.wkt && this.args.datasource) {
-                    //Use the geometry to search
-                    searchObj.wkt = this.args.wkt;
-                    searchObj.datasource = this.args.datasource; //optional
-                    searchObj.adminlevel = this.args.adminlevel; //optional
-                    searchObj.isSpatial = true;
+                    //Check to see if the datasource was valid
+                    if (settings.dsColumns[this.args.datasource.toLowerCase() + (this.args.adminlevel ? this.args.adminlevel : "0")]) {
+                        //Use the geometry in search parameters
+                        searchObj.wkt = this.args.wkt;
+                        searchObj.datasource = this.args.datasource; //optional
+                        searchObj.adminlevel = this.args.adminlevel; //optional
+                        searchObj.isSpatial = true;
+                    } else {
+                        //Couldn't find this datasource in the settings file. Exit.
+                        this.args.errorMessage = this.args.datasource.toLowerCase() + (this.args.adminlevel ? this.args.adminlevel : "0") + " was not found. Try GADM0, GAUL1 or NaturalEarth0, for example";
+                        this.args.featureCollection = { message: this.args.errorMessage, type: "FeatureCollection", features: [] };
+
+                        //Render HTML page with results at bottom
+                        respond(this.req, this.res, this.args);
+                        return;
+                    }
+
                 }
                 else {
                     //Let 'em know, then abort
@@ -503,7 +527,7 @@ function executeAdminStackSearch(searchObject, callback) {
         }
         else {
             //use a specified level
-            adminLevel = dsLevels[searchObject.datasource.toLowerCase()];
+            adminLevel = settings.dsLevels[searchObject.datasource.toLowerCase()];
         }
 
         log(adminLevel);
@@ -528,9 +552,14 @@ function executeAdminStackSearch(searchObject, callback) {
                     }
                     else {
                         //continue searching
-                        hitTest(level-1);
+                        hitTest(level - 1);
                     }
                 });
+            }
+            else {
+                //We've hit the end of the road
+                log("checked all levels for " + searchObject.wkt + ", found nothing.");
+                callback({ rows: [], status: "success" });
             }
         }
         //initiate loop
@@ -684,52 +713,32 @@ function geoJSONFormatter(rows, geom_fields_array) {
     return featureCollection;
 }
 
-//The lowest level for each datasource
-var dsLevels = {};
-dsLevels["gadm"] = 5;
-dsLevels["gaul"] = 2;
-dsLevels["naturalearth"] = 1;
-dsLevels["local"] = 2;
 
-//Columns by level and datasource
-var dsColumns = {};
-
-//Columns aliased to be consistent between data sources.
-dsColumns["gadm0"] = { geometry: "ST_AsGeoJSON(geom_simplify_high) as geom", columns: "guid as stack_guid, id_0 as adm0_code, name_0 as adm0_name, ST_AsText(ST_Centroid(geom)) as centroid, 0 as level"};
-dsColumns["gadm1"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, ST_AsText(ST_Centroid(geom)) as centroid, 1 as level" };
-dsColumns["gadm2"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name, ST_AsText(ST_Centroid(geom)) as centroid, 2 as level" };
-dsColumns["gadm3"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name, id_3 as adm3_code, name_3 as adm3_name, ST_AsText(ST_Centroid(geom)) as centroid, 3 as level" };
-dsColumns["gadm4"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name, id_3 as adm3_code, name_3 as adm3_name, id_4 as adm4_code, name_4 as adm4_name, ST_AsText(ST_Centroid(geom)) as centroid, 4 as level" };
-dsColumns["gadm5"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name, id_3 as adm3_code, name_3 as adm3_name, id_4 as adm4_code, name_4 as adm4_name, id_5 as adm5_code, name_5 as adm5_name, ST_AsText(ST_Centroid(geom)) as centroid, 5 as level" };
-
-dsColumns["gaul0"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, adm0_code, adm0_name, ST_AsText(ST_Centroid(geom)) as centroid, 0 as level" };
-dsColumns["gaul1"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, adm0_code, adm0_name, adm1_code, adm1_name, ST_AsText(ST_Centroid(geom)) as centroid, 1 as level" };
-dsColumns["gaul2"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, adm0_code, adm0_name, adm1_code, adm1_name, adm2_code, adm2_name, ST_AsText(ST_Centroid(geom)) as centroid, 2 as level" };
-
-dsColumns["naturalearth0"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, adm0_a3 as adm0_code, name as adm0_name, ST_AsText(ST_Centroid(geom)) as centroid, 0 as level" };
-dsColumns["naturalearth1"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, adm0_a3 as adm0_code, admin as adm0_name, name as adm1_code, name as adm1_name, ST_AsText(ST_Centroid(geom)) as centroid, 1 as level" }; //no adm1 code
-
-//TODO
-dsColumns["local0"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, adm0_code, adm0_name, ST_AsText(ST_Centroid(geom)) as centroid, 0 as level" };
-dsColumns["local1"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, adm0_code, adm0_name, adm1_code, adm1_name, ST_AsText(ST_Centroid(geom)) as centroid, 1 as level" };
 
 function buildAdminStackQuery(rowid, datasource, level, returnGeometry) {
-    //build up the query to be executed
+    //build up the query to be executed for getting Admin Stacks
+    
     var table = datasource.toLowerCase() + level; //gadm, gaul, naturalearth, local, custom
     var queryObj = {};
+    try{
+        queryObj.text = "SELECT " + (returnGeometry == "yes" ? settings.dsColumns[table].geometry : "") + settings.dsColumns[table].columns + " FROM " + table + " WHERE guid = $1";
+        queryObj.values = [rowid];
+    } catch (e) {
 
-    queryObj.text = "SELECT " + (returnGeometry == "yes" ? dsColumns[table].geometry : "") + dsColumns[table].columns + " FROM " + table + " WHERE guid = $1";
-    queryObj.values = [rowid];
+    }
+    finally{
+        return queryObj;
+    }
 
-    return queryObj;
+    
 }
 
 function buildAdminStackSpatialQuery(wkt, datasource, level, returnGeometry) {
-    //build the spatial query
+    //build the spatial query for getting Admin Stacks by WKT geometry intersect
     var table = datasource.toLowerCase() + level; //gadm, gaul, naturalearth, local, custom
     var queryObj = {};
 
-    queryObj.text = "SELECT " + (returnGeometry == "yes" ? dsColumns[table].geometry : "") + dsColumns[table].columns + " FROM " + table + " WHERE ST_Intersects(ST_GeomFromText($1, 4326), geom)";
+    queryObj.text = "SELECT " + (returnGeometry == "yes" ? settings.dsColumns[table].geometry : "") + settings.dsColumns[table].columns + " FROM " + table + " WHERE ST_Intersects(ST_GeomFromText($1, 4326), geom)";
     queryObj.values = [wkt];
 
     return queryObj;
