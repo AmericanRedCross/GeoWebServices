@@ -223,6 +223,7 @@ routes['getAdminStack'] = flow.define(
 
             //Set up an object to hold search terms
             var searchObj = {};
+            searchObj.returnGeometry = this.args.returnGeometry;
 
             //All 3 need to be defined OR WKT & Datasource and Level, or feature ID.
             if (this.args.featureid) {
@@ -484,7 +485,7 @@ function executeAdminStackSearch(searchObject, callback) {
     if (searchObject.isSpatial == false) {
         //lookup by id, datasource and level
         //build sql query
-        sql = buildAdminStackQuery(searchObject.stackid, searchObject.datasource, searchObject.adminlevel);
+        sql = buildAdminStackQuery(searchObject.stackid, searchObject.datasource, searchObject.adminlevel, searchObject.returnGeometry);
         log(sql);
 
         //run it
@@ -557,6 +558,7 @@ var executeAdminStackSearchByFeatureId = flow.define(
             searchObj.stackid = row.stackid;
             searchObj.adminlevel = row.level;
             searchObj.datasource = row.source;
+            searchObj.returnGeometry = this.args.returnGeometry;
             searchObj.isSpatial = false;
 
             executeAdminStackSearch(searchObj, this);
@@ -670,6 +672,11 @@ function geoJSONFormatter(rows, geom_fields_array) {
             });
         }
 
+        //handle centroids
+        if (row.centroid) {
+            row.centroid = row.centroid.replace("POINT(", "").replace(")", "").split(" "); //split WKT into a coordinate array [x,y]
+        }
+
         feature.properties = row;
         featureCollection.features.push(feature);
     })
@@ -688,41 +695,41 @@ dsLevels["local"] = 2;
 var dsColumns = {};
 
 //Columns aliased to be consistent between data sources.
-dsColumns["gadm0"] = "ST_AsGeoJSON(geom_simplify_high) as geom, ogc_fid as id, id_0 as adm0_code, name_0 as adm0_name";
-dsColumns["gadm1"] = "ST_AsGeoJSON(geom) as geom, ogc_fid as id, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name";
-dsColumns["gadm2"] = "ST_AsGeoJSON(geom) as geom, ogc_fid as id, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name";
-dsColumns["gadm3"] = "ST_AsGeoJSON(geom) as geom, ogc_fid as id, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name, id_3 as adm3_code, name_3 as adm3_name";
-dsColumns["gadm4"] = "ST_AsGeoJSON(geom) as geom, ogc_fid as id, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name, id_3 as adm3_code, name_3 as adm3_name, id_4 as adm4_code, name_4 as adm4_name";
-dsColumns["gadm5"] = "ST_AsGeoJSON(geom) as geom, ogc_fid as id, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name, id_3 as adm3_code, name_3 as adm3_name, id_4 as adm4_code, name_4 as adm4_name, id_5 as adm5_code, name_5 as adm5_name";
+dsColumns["gadm0"] = { geometry: "ST_AsGeoJSON(geom_simplify_high) as geom", columns: "guid as stack_guid, id_0 as adm0_code, name_0 as adm0_name, ST_AsText(ST_Centroid(geom)) as centroid, 0 as level"};
+dsColumns["gadm1"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, ST_AsText(ST_Centroid(geom)) as centroid, 1 as level" };
+dsColumns["gadm2"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name, ST_AsText(ST_Centroid(geom)) as centroid, 2 as level" };
+dsColumns["gadm3"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name, id_3 as adm3_code, name_3 as adm3_name, ST_AsText(ST_Centroid(geom)) as centroid, 3 as level" };
+dsColumns["gadm4"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name, id_3 as adm3_code, name_3 as adm3_name, id_4 as adm4_code, name_4 as adm4_name, ST_AsText(ST_Centroid(geom)) as centroid, 4 as level" };
+dsColumns["gadm5"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, id_0 as adm0_code, name_0 as adm0_name, id_1 as adm1_code, name_1 as adm1_name, id_2 as adm2_code, name_2 as adm2_name, id_3 as adm3_code, name_3 as adm3_name, id_4 as adm4_code, name_4 as adm4_name, id_5 as adm5_code, name_5 as adm5_name, ST_AsText(ST_Centroid(geom)) as centroid, 5 as level" };
 
-dsColumns["gaul0"] = "ST_AsGeoJSON(geom) as geom,ogc_fid as id, adm0_code, adm0_name";
-dsColumns["gaul1"] = "ST_AsGeoJSON(geom) as geom,ogc_fid as id, adm0_code, adm0_name, adm1_code, adm1_name";
-dsColumns["gaul2"] = "ST_AsGeoJSON(geom) as geom,ogc_fid as id, adm0_code, adm0_name, adm1_code, adm1_name, adm2_code, adm2_name";
+dsColumns["gaul0"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, adm0_code, adm0_name, ST_AsText(ST_Centroid(geom)) as centroid, 0 as level" };
+dsColumns["gaul1"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, adm0_code, adm0_name, adm1_code, adm1_name, ST_AsText(ST_Centroid(geom)) as centroid, 1 as level" };
+dsColumns["gaul2"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, adm0_code, adm0_name, adm1_code, adm1_name, adm2_code, adm2_name, ST_AsText(ST_Centroid(geom)) as centroid, 2 as level" };
 
-dsColumns["naturalearth0"] = "ST_AsGeoJSON(geom) as geom,ogc_fid as id, adm0_a3 as adm0_code, name as adm0_name";
-dsColumns["naturalearth1"] = "ST_AsGeoJSON(geom) as geom,ogc_fid as id, adm0_a3 as adm0_code, admin as adm0_name, name as adm1_code, name as adm1_name"; //no adm1 code
+dsColumns["naturalearth0"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, adm0_a3 as adm0_code, name as adm0_name, ST_AsText(ST_Centroid(geom)) as centroid, 0 as level" };
+dsColumns["naturalearth1"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, adm0_a3 as adm0_code, admin as adm0_name, name as adm1_code, name as adm1_name, ST_AsText(ST_Centroid(geom)) as centroid, 1 as level" }; //no adm1 code
 
 //TODO
-dsColumns["local0"] = "ST_AsGeoJSON(geom) as geom,ogc_fid, adm0_code, adm0_name";
-dsColumns["local1"] = "ST_AsGeoJSON(geom) as geom,ogc_fid, adm0_code, adm0_name, adm1_code, adm1_name";
+dsColumns["local0"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, adm0_code, adm0_name, ST_AsText(ST_Centroid(geom)) as centroid, 0 as level" };
+dsColumns["local1"] = { geometry: "ST_AsGeoJSON(geom) as geom,", columns: "guid as stack_guid, adm0_code, adm0_name, adm1_code, adm1_name, ST_AsText(ST_Centroid(geom)) as centroid, 1 as level" };
 
-function buildAdminStackQuery(rowid, datasource, level) {
+function buildAdminStackQuery(rowid, datasource, level, returnGeometry) {
     //build up the query to be executed
     var table = datasource.toLowerCase() + level; //gadm, gaul, naturalearth, local, custom
     var queryObj = {};
 
-    queryObj.text = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE guid = $1";
+    queryObj.text = "SELECT " + (returnGeometry == "yes" ? dsColumns[table].geometry : "") + dsColumns[table].columns + " FROM " + table + " WHERE guid = $1";
     queryObj.values = [rowid];
 
     return queryObj;
 }
 
-function buildAdminStackSpatialQuery(wkt, datasource, level) {
+function buildAdminStackSpatialQuery(wkt, datasource, level, returnGeometry) {
     //build the spatial query
     var table = datasource.toLowerCase() + level; //gadm, gaul, naturalearth, local, custom
     var queryObj = {};
 
-    queryObj.text = "SELECT " + dsColumns[table] + " FROM " + table + " WHERE ST_Intersects(ST_GeomFromText($1, 4326), geom)";
+    queryObj.text = "SELECT " + (returnGeometry == "yes" ? dsColumns[table].geometry : "") + dsColumns[table].columns + " FROM " + table + " WHERE ST_Intersects(ST_GeomFromText($1, 4326), geom)";
     queryObj.values = [wkt];
 
     return queryObj;

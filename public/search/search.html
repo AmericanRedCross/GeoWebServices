@@ -38,7 +38,7 @@
         }
 
         th {
-        float:left;
+            text-align:left;
         }
     </style>
 </head>
@@ -171,10 +171,11 @@
 
         //Build result table
         var table = $("<table><thead><tr><th>Name</th><th>Level</th><th>Source</th></tr></thead></table>").appendTo("#result");
+        var tbody = $("<tbody></tbody>").appendTo(table);
 
         //Iterate over name search matches
         $.each(data.features, function (i, feature) {
-            var tr = $("<tr class='result'></tr>").appendTo(table);
+            var tr = $("<tr class='result'></tr>").appendTo(tbody);
 
             //if source is IRC GeoDB, then do this.
             if (data.source == "GeoDB") {
@@ -217,7 +218,8 @@
     function startGetAdminStackById(item) {
         var postArgs = {
             featureid: item.featureid,
-            format: "GeoJSON"
+            format: "GeoJSON",
+            returnGeometry: "yes"
         };
 
         $("#adminResult").html("");
@@ -240,7 +242,8 @@
         var postArgs = {
             wkt: "POINT(" + item.lng + " " + item.lat + ")",
             datasource: "GADM", //For now, do hit test with GADM
-            format: "GeoJSON"
+            format: "GeoJSON",
+            returnGeometry: "yes"
         };
 
         var url = 'http://' + _server + '/services/getAdminStack';
