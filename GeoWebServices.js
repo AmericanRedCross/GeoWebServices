@@ -162,7 +162,7 @@ routes['nameSearch'] = function (req, res) {
     }
 
     //Google Analytics
-    ga.trackPage('GetAdminStack', '/services/nameSearch', function (err, resp) {
+    ga.trackPage('NameSearch', '/services/nameSearch', function (err, resp) {
         if (!err && resp.statusCode === 200) {
             console.log('Page has been tracked with Google Analytics');
         }
