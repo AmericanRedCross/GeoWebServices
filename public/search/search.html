@@ -103,6 +103,10 @@
         key: 'BC9A493B41014CAABB98F0471D759707'
     }).addTo(map);
 
+    //L.tileLayer('http://{s}.tiles.mapbox.com/v3/phoebe.TestProject/{z}/{x}/{y}.png').addTo(map);
+
+
+
     //Set 'enter' click trigger for button
     $('#uxSearchterm').keypress(function (e) {
         if (e.keyCode == 13)
@@ -324,13 +328,13 @@
         //retrieve the returnUrl parameter from the querystring.
         //Assume it's there.
         if (urlParams && urlParams.returnUrl) {
-            var url = urlParams.returnUrl + "?"; //encodeURIComponent(urlParams.returnUrl);
+            var url = urlParams.returnUrl; //encodeURIComponent(urlParams.returnUrl);
             var args = {};
             if (featureid) {
-                url += "featureid=" + featureid;
+                url += "&featureid=" + featureid;
             }
             else {
-                url += "x=" + x + "&y=" + y;
+                url += "&x=" + x + "&y=" + y;
             }
 
             //redirect
