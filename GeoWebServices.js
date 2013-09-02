@@ -14,7 +14,8 @@ var express = require('express')
   , rest = require('./custom_modules/getJSON')
   , settings = require('./settings')
   , loggly = require('loggly')
-  , httpProxy = require('http-proxy');
+  , httpProxy = require('http-proxy')
+  , ga = require('nodealytics');
 
 var app = express();
 
@@ -39,6 +40,11 @@ var config = {
 //Loggly client
 var logclient = loggly.createClient(config);
 
+//Google Analytics
+ga.initialize(settings.ga.key, '54.213.94.50', function () {
+    //MORE GOOGLE ANALYTICS CODE HERE
+});
+
 // all environments
 app.set('port', process.env.PORT || settings.application.port);
 app.set('views', __dirname + '/views'); 
@@ -55,6 +61,7 @@ app.use(require('less-middleware')({ src: __dirname + '/public' }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use("/public/javascript", express.static(path.join(__dirname, 'public/javascript')));
 app.use("/public/images", express.static(path.join(__dirname, 'public/images')));
+
 
 app.use(function (err, req, res, next) {
     console.error(err.stack);
@@ -154,6 +161,13 @@ routes['nameSearch'] = function (req, res) {
         args = req.query;
     }
 
+    //Google Analytics
+    ga.trackPage('GetAdminStack', '/services/nameSearch', function (err, resp) {
+        if (!err && resp.statusCode === 200) {
+            console.log('Page has been tracked with Google Analytics');
+        }
+    });
+
     //Detect if args were passed in
     if (JSON.stringify(args) != '{}') {
         //Add custom properties as defaults
@@ -167,6 +181,8 @@ routes['nameSearch'] = function (req, res) {
             searchterm = args.searchterm;
             //Try querying internal GeoDB - strict (exact match) first
             startExecuteAdminNameSearch(searchterm, { type: "name", strict: true, returnGeometry: args.returnGeometry }, req, res, args);
+            GATrackEvent("Get Feature", "by name", args.searchterm); //Analytics
+
         }
         else if (args.featureid) {
             //User is searching by unique ID from text_search table
@@ -180,6 +196,8 @@ routes['nameSearch'] = function (req, res) {
                 respond(req, res, args);
                 return;
             });
+            GATrackEvent("Get Feature", "by Id", args.featureid); //Analytics
+
         }
         else {
             //No search term, abort.
@@ -214,6 +232,13 @@ routes['getAdminStack'] = flow.define(
             this.args = this.req.query;
         }
 
+        //Google Analytics
+        ga.trackPage('GetAdminStack', '/services/getAdminStack', function (err, resp) {
+            if (!err && resp.statusCode === 200) {
+                console.log('Page has been tracked with Google Analytics');
+            }
+        });
+
         //Detect if args were passed in
         if (JSON.stringify(this.args) != '{}') {
             //Add custom properties as defaults
@@ -229,6 +254,7 @@ routes['getAdminStack'] = flow.define(
             if (this.args.featureid) {
                 //If we get the feature id, we need to first look up the item from textsearch table, and then go  get the stack.
                 executeAdminStackSearchByFeatureId(this.args.featureid, this.req, this.res, this.args); //It has its own flow defined
+                GATrackEvent("Get Admin Stack", "by feature id", this.args.featureid); //Analytics
                 return;
             }
             else if (this.args.stackid && this.args.adminlevel && this.args.datasource) {
@@ -239,6 +265,8 @@ routes['getAdminStack'] = flow.define(
                     searchObj.adminlevel = this.args.adminlevel;
                     searchObj.datasource = this.args.datasource;
                     searchObj.isSpatial = false;
+
+                    GATrackEvent("Get Admin Stack", "by Stack ID, Admin, Datasource",  this.args.stackid + "," + this.args.adminlevel + "," + this.args.datasource); //Analytics
                 }
                 else {
                     //Couldn't find this datasource in the settings file. Exit.
@@ -260,6 +288,9 @@ routes['getAdminStack'] = flow.define(
                         searchObj.datasource = this.args.datasource; //optional
                         searchObj.adminlevel = this.args.adminlevel; //optional
                         searchObj.isSpatial = true;
+
+                        GATrackEvent("Get Admin Stack", "by Geom, Admin, Datasource", this.args.wkt + "," + this.args.adminlevel + "," + this.args.datasource); //Analytics
+
                     } else {
                         //Couldn't find this datasource in the settings file. Exit.
                         this.args.errorMessage = this.args.datasource.toLowerCase() + (this.args.adminlevel ? this.args.adminlevel : "0") + " was not found. Try GADM0, GAUL1 or NaturalEarth0, for example";
@@ -281,6 +312,7 @@ routes['getAdminStack'] = flow.define(
                     return;
                 }
             }
+
 
             //Try querying internal GeoDB
             executeAdminStackSearch(searchObj, this);
@@ -337,6 +369,7 @@ app.get('/search', function (req, res) {
 
 //Proxy for cross domain calls
 app.all('/proxy', routes['proxyRequest']);
+
 
 //Start listening
 http.createServer(app).listen(app.get('port'), app.get('ipaddr'), function () {
@@ -776,3 +809,12 @@ function IsNumeric(sText) {
     }
     return IsNumber;
 }
+
+function GATrackEvent(category, action, label) {
+    ga.trackEvent(category, action, label, function (err, resp) {
+        if (!err && resp.statusCode === 200) {
+            console.log('Event has been tracked with Google Analytics');
+        }
+    });
+}
+
