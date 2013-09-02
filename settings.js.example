@@ -6,6 +6,7 @@ settings.pg = {};
 settings.geonames = {};
 settings.loggly = {};
 settings.application = {};
+settings.ga = {};
 
 //application port settings
 settings.application.port = 80;
@@ -25,6 +26,9 @@ settings.loggly.subdomain = 'mysubdomain';
 settings.loggly.username = 'username';
 settings.loggly.password = 'password';
 settings.loggly.logglyKey = "abcdefg-hijklmno-pqrstu-vwxyz";
+
+//settings for Google Analytics
+settings.ga.key = "UA-000000000-1";
 
 //settings for http proxy - which domains to allow
 settings.proxyOptions = {
