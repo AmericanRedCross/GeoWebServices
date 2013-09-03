@@ -92,9 +92,6 @@
             <input id="uxChooseThis" type="button" value="Choose This Location"/>
         </div>
     </div>
-
-
-</body>
 <script type="text/javascript">
     var map = L.map('map').setView([39.74739, -105], 13);
     //var _server = "localhost:3000";
@@ -126,7 +123,7 @@
                 //From GeoDB
                 sendBackResult(_chosenFeature.properties.featureid);
             }
-            
+
         }
     });
 
@@ -145,7 +142,7 @@
             $("#result").html("Please enter a placename with no commas.  <span style='font-style:italic'>example: Port-au-Prince</span>");
             return;
         }
-        
+
         $("#result").html("");
         var loading = new loader("#result");
 
@@ -265,7 +262,7 @@
 
 
     function handleAdminStackResponse(data) {
-        $("#stackWrapper").css({"display": "block"});
+        $("#stackWrapper").css({ "display": "block" });
         $("#adminResult").html(""); //clear admin panel
 
         //Store the object for later use.
@@ -324,7 +321,7 @@
         this.show();
     }
 
-    
+
     //Pass back the ID or x,y to ECOS
     function sendBackResult(featureid, x, y) {
         //retrieve the returnUrl parameter from the querystring.
@@ -348,4 +345,7 @@
     }
 
 </script>
+
+</body>
+
 </html>
