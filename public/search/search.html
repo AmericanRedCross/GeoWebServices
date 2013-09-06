@@ -73,6 +73,7 @@
     </div>
 
     <div class="clearfix" style="margin:20px;">
+        <div id="map">
         </div>
         <div style="float:left;">
         <div id="result">
@@ -105,8 +106,6 @@
 
     //L.tileLayer('http://{s}.tiles.mapbox.com/v3/phoebe.TestProject/{z}/{x}/{y}.png').addTo(map);
 
-
-
     //Set 'enter' click trigger for button
     $('#uxSearchterm').keypress(function (e) {
         if (e.keyCode == 13)
@@ -132,6 +131,12 @@
 
     //starts the name search process using the search term entered by the user.
     function startNameSearch() {
+        //clear the map
+        if (_geoJSONLayer) map.removeLayer(_geoJSONLayer);
+
+        //diasable the select location button DK
+        $("#uxChooseThis").prop("disabled", true); //enabled the second option box
+
         var searchTerm = $("#uxSearchterm").val();
         if (!searchTerm) {
             $("#result").html("Please enter a search term.");
@@ -140,7 +145,7 @@
 
         //Don't allow commas
         if (searchTerm.indexOf(",") > -1) {
-            $("#result").html("Please enter a placename with no commas.  <span style='font-style:italic'>example: Port-au-Prince</span>");
+            $("#result").html("Please enter a placename with no commas.  <span style='font-style:italic'>Example: Port-au-Prince</span>");
             return;
         }
 
@@ -229,6 +234,9 @@
         $("#adminResult").html("");
         var loading = new loader("#adminResult");
 
+        //diasable the select location button
+        $("#uxChooseThis").prop("disabled", false); //enabled the second option box 
+
         var url = 'http://' + _server + '/services/getAdminStack';
 
         //Send POST, using JSONP
@@ -249,6 +257,9 @@
             format: "GeoJSON",
             returnGeometry: "yes"
         };
+
+        //diasable the select location button DK
+        $("#uxChooseThis").prop("disabled", false); //enabled the second option box 
 
         var url = 'http://' + _server + '/services/getAdminStack';
 
@@ -344,6 +355,15 @@
             //What do do if we don't get a return Url?
         }
     }
+
+    //clear text boxes on focus DK
+    $(function() {
+        $('input[type=text]').focus(function() {
+            $(this).val("") === "";
+        });
+    });
+
+
 
 </script>
 
