@@ -10,6 +10,12 @@
     <script src="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.js"></script>
     <script src="../javascript/getUrlParams.js"></script>
     <style type="text/css">
+        
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f5f5f5; 
+        }
+
         #adminResult, #result {
             margin: 20px;
         }
@@ -43,33 +49,62 @@
 
         th {
             text-align:left;
+            padding: 2px 5px;            
         }
+
+        tr.result td {
+            padding: 2px 5px;
+        }
+
+        .btn-flat {
+            padding: 10px 15px;
+            cursor: pointer;
+            background: #56a0d3;
+            color: #3d3d3d;
+            border: none;
+            box-shadow: none;
+            -webkit-box-shadow: none;
+            -moz-box-shadow: none;
+            border-radius: 3px;
+            font-weight: 600; 
+        }
+
+        .btn-flat:hover {
+            background: #0091cd;
+            color: #000;            
+        } 
+
+        .btn-chooseThis {            
+            margin-left: 122px;                       
+        }
+
+        .btn-search {
+            margin: 0 15px;
+        }
+
+        #stackwrapper {
+            padding: 20px;
+        }
+
     </style>
 </head>
 <body>
 
     <div style="margin:20px;">
-        <table>
-
+        <table style="margin-bottom:10px;">
             <tr>
-                <td>Location:
+                <td style="font-weight:600">Location:
                 </td>
                 <td>
                     <input type="text" placeholder="" id="uxSearchterm" />
-
                 </td>
                 <td>
-                    <input type="button" value="Search" onclick="startNameSearch()" />
-                </td>
-                <td>
-                    <div>Search for a placename or administrative boundary by entering a name in the search box.</div>
-                    <span style="font-style:italic">Hint: enter a name, NOT a fully qualified City, Province, Country for example. </span>
-
+                    <input class="btn-flat btn-search" type="button" value="Search" onclick="startNameSearch()" />
                 </td>
             </tr>
-
-
         </table>
+        <div>Search for a placename or administrative boundary by entering a name in the search box.</div>
+        <span style="font-size:90%; color:#6d6e70;">Hint: enter a name, NOT a fully qualified City, Province, Country (for example, 'Port-au-Prince' NOT 'Port-au-Prince, Haiti') </span>
     </div>
 
     <div class="clearfix" style="margin:20px;">
@@ -85,13 +120,13 @@
     </div>
 
     <div id="stackWrapper" style="display:none;">
-        <div>
+        <div style="font-weight:600;">
             Administrative Boundary Hierarchy:
         </div>
         <div id="adminResult">
         </div>
         <div>
-            <input id="uxChooseThis" type="button" value="Choose This Location"/>
+            <input class="btn-flat btn-chooseThis" id="uxChooseThis" type="button" value="Choose This Location"/>
         </div>
     </div>
 <script type="text/javascript">
@@ -133,6 +168,7 @@
     function startNameSearch() {
         //clear the map
         if (_geoJSONLayer) map.removeLayer(_geoJSONLayer);
+
 
         //diasable the select location button DK
         $("#uxChooseThis").prop("disabled", true); //enabled the second option box
@@ -177,6 +213,7 @@
     function handleNameSearchResponse(data) {
         $("#result").html(""); //clear name result panel
         $("#adminResult").html(""); //clear admin panel
+        $("#stackWrapper").hide(); // hide admin title and choose location button
 
         //Build result table
         var table = $("<table><thead><tr><th>Name</th><th>Level</th><th>Source</th></tr></thead></table>").appendTo("#result");
@@ -198,7 +235,7 @@
 
                 //Write out other information for this row for the user to see
                 var linktd = $("<td>" + feature.properties.fullname + "</td>").appendTo(tr);
-                $("<td>" + feature.properties.level + "</td><td>" + feature.properties.source + "</td>").appendTo(tr);
+                $("<td style='text-align:center'>" + feature.properties.level + "</td><td>" + feature.properties.source + "</td>").appendTo(tr);
 
             }
             else if (data.source == "Geonames") {
@@ -287,7 +324,15 @@
 
             //Write out all properties.
             $.each(feature.properties, function (key, value) {
-                $("<div>" + key + ": " + value + "</div>").appendTo(div);
+                if (key === "stack_guid") {
+                    console.log("not displaying " + key + ": " + value);
+                } else if (key === "centroid") {
+                    var x = parseFloat(value[0]).toFixed(6);
+                    var y = parseFloat(value[1]).toFixed(6);
+                    $("<div><span style='font-weight:600;'>" + key + ": </span> " + x + ", " + y + "</div>").appendTo(div);
+                } else {
+                    $("<div><span style='font-weight:600;'>" + key + ": </span> " + value + "</div>").appendTo(div);
+                }                
             });
 
             showMapFeature(feature);
