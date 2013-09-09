@@ -328,10 +328,9 @@
 
     //If user chooses to lookup stack by X,Y
     function startGetAdminStackByXY(item) {
-        //TODO - need to cleanse this input string so users can't trigger SQL Injection attacks.  Also on server side.
         var postArgs = {
             wkt: "POINT(" + item.lng + " " + item.lat + ")",
-            datasource: "GADM", //For now, do hit test with GADM
+            datasource: "GAUL", //Default Search for x,y admin stack is GAUL
             format: "GeoJSON",
             returnGeometry: "yes"
         };
@@ -361,7 +360,7 @@
 
         //iterate over Admin Stack responses
         $.each(data.features, function (i, feature) {
-            var div = $("<div class='adminResultitem'></div>").appendTo("#adminResult");
+            var div = $("<span class='adminResultitem'></span>").appendTo("#adminResult");          
 
             //Write out all properties.
             $.each(feature.properties, function (key, value) {
