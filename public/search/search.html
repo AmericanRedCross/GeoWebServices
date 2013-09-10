@@ -68,7 +68,6 @@
                 </td>
             </tr>
 
-
         </table>
     </div>
 
@@ -76,12 +75,10 @@
         <div id="map">
         </div>
         <div style="float:left;">
-        <div id="result">
-            
-        </div>
-        </div>
+            <div id="result">
 
-
+            </div>
+        </div>
     </div>
 
     <div id="stackWrapper" style="display:none;">
@@ -272,7 +269,6 @@
         });
     }
 
-
     function handleAdminStackResponse(data) {
         $("#stackWrapper").css({ "display": "block" });
         $("#adminResult").html(""); //clear admin panel
@@ -316,7 +312,6 @@
         }
     }
 
-
     function loader(selector) {
         this.selector = selector;
         this.node;
@@ -332,7 +327,6 @@
 
         this.show();
     }
-
 
     //Pass back the ID or x,y to ECOS
     function sendBackResult(featureid, x, y) {
@@ -356,15 +350,15 @@
         }
     }
 
-    //clear text boxes on focus DK
+    //clear text boxes and disable submit on focus DK
     $(function() {
         $('input[type=text]').focus(function() {
             $(this).val("") === "";
         });
+
+        //diasable the select location button DK
+        $("#uxChooseThis").prop("disabled", false); //enabled the second option box
     });
-
-
-
 </script>
 
 </body>
