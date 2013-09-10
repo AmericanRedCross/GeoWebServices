@@ -350,6 +350,7 @@ routes['getAdminStack'] = flow.define(
 
 //Reroute HTTP requests to HTTPS
 app.all('*', function (req, res, next) {
+    console.log("got request");
     if (req.headers['x-forwarded-proto'] != 'https')
         res.redirect('https://' + req.headers.host + req.url)
     else
@@ -364,16 +365,10 @@ app.get('/', function (req, res) { res.redirect('/services') });
 app.get('/services', routes['listServices']);
 
 //Admin Name Query - get - display page with default form
-app.get('/services/nameSearch', routes['nameSearch']);
-
-//When a Query gets posted - read attributes from post and render results
-app.post('/services/nameSearch', routes['nameSearch']);
+app.all('/services/nameSearch', routes['nameSearch']);
 
 //Admin Stack Query - get - display page with default form
-app.get('/services/getAdminStack', routes['getAdminStack']);
-
-//When a Query gets posted - read attributes from post and render results
-app.post('/services/getAdminStack', routes['getAdminStack']);
+app.all('/services/getAdminStack', routes['getAdminStack']);
 
 //Route search path to static search html file
 app.get('/search', function (req, res) {
