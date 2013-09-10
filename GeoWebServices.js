@@ -15,7 +15,9 @@ var express = require('express')
   , settings = require('./settings')
   , loggly = require('loggly')
   , httpProxy = require('http-proxy')
-  , ga = require('nodealytics');
+  , ga = require('nodealytics')
+  , fs = require('fs')
+  , https = require('https');
 
 var app = express();
 
@@ -44,6 +46,11 @@ var logclient = loggly.createClient(config);
 ga.initialize(settings.ga.key, '54.213.94.50', function () {
     //MORE GOOGLE ANALYTICS CODE HERE
 });
+
+//Configure HTTPS
+var SSLoptions = {
+    pfx: fs.readFileSync('webviz.pfx')
+};
 
 // all environments
 app.set('port', process.env.PORT || settings.application.port);
@@ -216,7 +223,6 @@ routes['nameSearch'] = function (req, res) {
 }
 
 routes['getAdminStack'] = flow.define(
-
     function (req, res) {
         //Stash the node request and response objects.
         this.req = req;
@@ -342,6 +348,13 @@ routes['getAdminStack'] = flow.define(
     }
 );
 
+//Reroute HTTP requests to HTTPS
+app.all('*', function (req, res, next) {
+    if (req.headers['x-forwarded-proto'] != 'https')
+        res.redirect('https://' + req.headers.host + req.url)
+    else
+        next() /* Continue to other routes if we're not redirecting */
+})
 
 //Define Routes
 //Root Request - redirect to services page
@@ -372,7 +385,7 @@ app.all('/proxy', routes['proxyRequest']);
 
 
 //Start listening
-http.createServer(app).listen(app.get('port'), app.get('ipaddr'), function () {
+https.createServer(options,app).listen(app.get('port'), app.get('ipaddr'), function () {
     log('Express server listening on port ' + app.get('port'));
 });
 
