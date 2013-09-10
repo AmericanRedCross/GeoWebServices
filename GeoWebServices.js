@@ -44,12 +44,11 @@ var logclient = loggly.createClient(config);
 
 //Google Analytics
 ga.initialize(settings.ga.key, '54.213.94.50', function () {
-    //MORE GOOGLE ANALYTICS CODE HERE
 });
 
 //Configure HTTPS
 var SSLoptions = {
-    pfx: fs.readFileSync('webviz.pfx')
+    pfx: fs.readFileSync(settings.ssl.pfx)
 };
 
 // all environments

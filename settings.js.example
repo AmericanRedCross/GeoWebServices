@@ -7,9 +7,14 @@ settings.geonames = {};
 settings.loggly = {};
 settings.application = {};
 settings.ga = {};
+settings.ssl = {};
 
 //application port settings
 settings.application.port = 80;
+
+//SSL Settings
+settings.ssl.pfx = 'webviz.pfx';
+settings.ssl.password = '<password>';
 
 //Settings for postgres DB
 settings.pg.username = 'username';
