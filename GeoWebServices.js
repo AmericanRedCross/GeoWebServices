@@ -48,7 +48,8 @@ ga.initialize(settings.ga.key, '54.213.94.50', function () {
 
 //Configure HTTPS
 var SSLoptions = {
-    pfx: fs.readFileSync(settings.ssl.pfx)
+    pfx: fs.readFileSync(settings.ssl.pfx),
+    passphrase: settings.ssl.password
 };
 
 // all environments
