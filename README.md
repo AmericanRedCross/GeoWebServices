@@ -40,9 +40,9 @@ Instructions for setting up Node.js 0.10.15 on Ubuntu 12.04 (EC2)
 	sudo npm install -g nodemon
 
 ### Create a settings.js file
-Specify IP, Ports, Passwords and other settings in settings.js.
+Specify IP, Ports, Passwords and other settings in a file called settings.js.
 An example has been provided - settings.js.example.
-This must be filled out with valid settings for the application to run.
+Settings.js must be filled out with valid settings for the application to run.
 
 ### Run
 	sudo forever start GeoWebServices.js
