@@ -385,7 +385,7 @@ app.all('/proxy', routes['proxyRequest']);
 
 
 //Start listening
-https.createServer(options,app).listen(app.get('port'), app.get('ipaddr'), function () {
+https.createServer(SSLoptions, app).listen(app.get('port'), app.get('ipaddr'), function () {
     log('Express server listening on port ' + app.get('port'));
 });
 
