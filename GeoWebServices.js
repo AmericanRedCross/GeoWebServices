@@ -349,13 +349,13 @@ routes['getAdminStack'] = flow.define(
 );
 
 //Reroute HTTP requests to HTTPS
-app.all('*', function (req, res, next) {
-    console.log("got request");
-    if (req.headers['x-forwarded-proto'] != 'https')
-        res.redirect('https://' + req.headers.host + req.url)
-    else
-        next() /* Continue to other routes if we're not redirecting */
-})
+//app.all('*', function (req, res, next) {
+//    console.log("got request");
+//    if (req.headers['x-forwarded-proto'] != 'https')
+//        res.redirect('https://' + req.headers.host + req.url)
+//    else
+//        next() /* Continue to other routes if we're not redirecting */
+//})
 
 //Define Routes
 //Root Request - redirect to services page
@@ -380,7 +380,7 @@ app.all('/proxy', routes['proxyRequest']);
 
 
 //Start listening
-https.createServer(SSLoptions, app).listen(app.get('port'), app.get('ipaddr'), function () {
+http.createServer(app).listen(app.get('port'), app.get('ipaddr'), function () {
     log('Express server listening on port ' + app.get('port'));
 });
 
