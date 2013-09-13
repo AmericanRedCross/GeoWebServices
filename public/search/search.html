@@ -233,7 +233,7 @@
             returnGeometry: "no"
         };
 
-        var url = 'http://' + _server + '/services/nameSearch';
+        var url = 'https://' + _server + '/services/nameSearch';
 
         //Send POST, using JSONP
         $.getJSON(url + "?callback=?", postArgs).done(function (data) {
@@ -313,7 +313,7 @@
         //diasable the select location button
         $("#uxChooseThis").prop("disabled", false); //enabled the second option box 
 
-        var url = 'http://' + _server + '/services/getAdminStack';
+        var url = 'https://' + _server + '/services/getAdminStack';
 
         //Send POST, using JSONP
         $.getJSON(url + "?callback=?", postArgs).done(function (data) {
@@ -336,7 +336,7 @@
         //diasable the select location button DK
         $("#uxChooseThis").prop("disabled", false); //enabled the second option box 
 
-        var url = 'http://' + _server + '/services/getAdminStack';
+        var url = 'https://' + _server + '/services/getAdminStack';
 
         //Send POST, using JSONP
         $.getJSON(url + "?callback=?", postArgs).done(function (data) {
