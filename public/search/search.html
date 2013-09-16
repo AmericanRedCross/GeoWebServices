@@ -169,7 +169,8 @@
     </div> <!-- /#wrapper -->
 
 <script type="text/javascript">
-    var map = L.map('map').setView([0, -10], 2);
+    var map = L.map('map').setView([0,0], 1);
+    map.locate({setView: true, maxZoom: 10});
     //var _server = "localhost:3000";
     var _server = "webviz.redcross.org";
 
