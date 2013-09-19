@@ -182,12 +182,13 @@ routes['nameSearch'] = function (req, res) {
         args.featureCollection = { source: "GeoDB" };
 
         //Get the text arg, pass it to function
-        var searchterm = "", featureid = "";
+        var featureid = "", datasource = "";
         if (args.searchterm) {
             //User is doing a text search
-            searchterm = args.searchterm;
+            datasource = args.datasource; //Optional
+
             //Try querying internal GeoDB - strict (exact match) first
-            startExecuteAdminNameSearch(searchterm, { type: "name", strict: true, returnGeometry: args.returnGeometry }, req, res, args);
+            startExecuteAdminNameSearch(args.searchterm, { type: "name", strict: true, returnGeometry: args.returnGeometry, datasource: datasource }, req, res, args);
             GATrackEvent("Get Feature", "by name", args.searchterm); //Analytics
 
         }
@@ -396,7 +397,7 @@ var startExecuteAdminNameSearch = flow.define(
         this.args = args;
 
         //Start looking for exact matches
-        executeStrictAdminNameSearch(this.args.searchterm, { returnGeometry: this.args.returnGeometry }, this);
+        executeStrictAdminNameSearch(searchterm, options, this);
 
     }, function (result) {
         //this is the result of executeAdminNameSearch 'strict' callback
@@ -787,10 +788,14 @@ function buildAdminStackSpatialQuery(wkt, datasource, level, returnGeometry) {
 
 function respond(req, res, args) {
     //Write out a response as JSON or HTML with the appropriate arguments.  Add more formats here if desired
-    if (!args.format || args.format == "html") {
-        res.render(args.view, args)
+    if (!args.format || args.format.toLowerCase() == "geojson") {
+        res.jsonp(args.featureCollection);
     }
-    else if (args.format && args.format == "GeoJSON") {
+    else if (args.format && args.format.toLowerCase() == "html") {
+        res.render(args.view, args);   
+    }
+    else {
+        //if user passes unrecognized format, just return geojson (since these are web services)
         res.jsonp(args.featureCollection);
     }
 }
