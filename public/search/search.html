@@ -204,8 +204,6 @@
 
     var _chosenFeature; //Store the clicked on feature so we can send it back.
 
-    var searchTerm = ""; //Keep as global so we can always grab user's search term (in case they delete the term after getting results, but before sending result back to caller).
-
     //starts the name search process using the search term entered by the user.
     function startNameSearch() {
         //clear the map
@@ -215,7 +213,7 @@
         //diasable the select location button DK
         $("#uxChooseThis").prop("disabled", true); //enabled the second option box
 
-        searchTerm = $("#uxSearchterm").val();
+        var searchTerm = $("#uxSearchterm").val();
         if (!searchTerm) {
             $("#result").html("Please enter a search term.");
             return;
@@ -425,11 +423,11 @@
             var url = urlParams.returnUrl; //encodeURIComponent(urlParams.returnUrl);
             var args = {};
             //Always add searchterm into querystring
-            if (searchTerm) url += "&searchterm=" + searchTerm;
             if (featureid) {
                 url += "&featureid=" + featureid;
             }
             else {
+                if (_chosenFeature) url += "&placename=" + _chosenFeature.split(",")[0];
                 url += "&x=" + x + "&y=" + y;
             }
 
