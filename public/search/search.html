@@ -427,7 +427,7 @@
                 url += "&featureid=" + featureid;
             }
             else {
-                if (_chosenFeature) url += "&placename=" + _chosenFeature.name;
+                if (_chosenFeature) url += "&placename=" + _chosenFeature.properties.name;
                 url += "&x=" + x + "&y=" + y;
             }
 
