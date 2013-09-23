@@ -788,11 +788,11 @@ function buildAdminStackSpatialQuery(wkt, datasource, level, returnGeometry) {
 
 function respond(req, res, args) {
     //Write out a response as JSON or HTML with the appropriate arguments.  Add more formats here if desired
-    if (!args.format || args.format.toLowerCase() == "geojson") {
-        res.jsonp(args.featureCollection);
+    if (!args.format || args.format.toLowerCase() == "html") {
+        res.render(args.view, args);
     }
-    else if (args.format && args.format.toLowerCase() == "html") {
-        res.render(args.view, args);   
+    else if (args.format && args.format.toLowerCase() == "geojson") {
+        res.jsonp(args.featureCollection);
     }
     else {
         //if user passes unrecognized format, just return geojson (since these are web services)
