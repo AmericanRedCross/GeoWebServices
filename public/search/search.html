@@ -329,7 +329,7 @@
     function startGetAdminStackByXY(item) {
         var postArgs = {
             wkt: "POINT(" + item.lng + " " + item.lat + ")",
-            datasource: "GAUL", //Default Search for x,y admin stack is GAUL
+            datasource: "GADM", //Default Search for x,y admin stack is GADM
             format: "GeoJSON",
             returnGeometry: "yes"
         };
