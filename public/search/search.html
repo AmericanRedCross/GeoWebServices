@@ -10,11 +10,11 @@
     <script src="https://webviz.redcross.org/public/javascript/leaflet.js"></script>
     <script src="../javascript/getUrlParams.js"></script>
     <style type="text/css">
-        
+
         html,
         body {
             font-family: Arial, Helvetica, sans-serif;
-            background: #f5f5f5; 
+            background: #f5f5f5;
             margin: 0;
             padding: 0 10px;
             height: 100%;
@@ -31,12 +31,12 @@
 
         #footer {
             width: 100%;
-            height: 50px;            
+            height: 50px;
             position: absolute;
             bottom: 0;
-            left: 0; 
+            left: 0;
             text-align: right;
-            border-top: 1px solid #d7d7d8;           
+            border-top: 1px solid #d7d7d8;
         }
 
         #footer p {
@@ -46,10 +46,10 @@
         }
 
         #footer a {
-            text-decoration: none;            
+            text-decoration: none;
             cursor: pointer;
             color: #6d6e70;
-        }        
+        }
 
         #adminResult, #result {
             padding: 20px;
@@ -80,7 +80,7 @@
 
         th {
             text-align:left;
-            padding: 2px 5px;            
+            padding: 2px 5px;
         }
 
         tr.result td {
@@ -97,16 +97,16 @@
             -webkit-box-shadow: none;
             -moz-box-shadow: none;
             border-radius: 3px;
-            font-weight: 600; 
+            font-weight: 600;
         }
 
         .btn-flat:hover {
             background: #0091cd;
-            color: #000;            
-        } 
+            color: #000;
+        }
 
-        .btn-chooseThis {            
-            margin-left: 122px;                       
+        .btn-chooseThis {
+            margin-left: 122px;
         }
 
         .btn-search {
@@ -157,7 +157,7 @@
         <div id="adminResult">
         </div>
         <div>
-            <input class="btn-flat btn-chooseThis" id="uxChooseThis" type="button" value="Choose This Location"/>
+            <input class="btn-flat btn-chooseThis" id="uxChooseThis" type="button" value="Choose This Location" disabled="true"/>
         </div>
     </div>
     </div> <!-- /#content -->
@@ -311,8 +311,6 @@
         $("#adminResult").html("");
         var loading = new loader("#adminResult");
 
-        //diasable the select location button
-        $("#uxChooseThis").prop("disabled", false); //enabled the second option box 
 
         var url = 'https://' + _server + '/services/getAdminStack';
 
@@ -334,9 +332,6 @@
             returnGeometry: "yes"
         };
 
-        //diasable the select location button DK
-        $("#uxChooseThis").prop("disabled", false); //enabled the second option box 
-
         var url = 'https://' + _server + '/services/getAdminStack';
 
         //Send POST, using JSONP
@@ -357,24 +352,33 @@
         _geoJSON.source = "GeoDB";
 
         //iterate over Admin Stack responses
-        $.each(data.features, function (i, feature) {
-            var div = $("<span class='adminResultitem'></span>").appendTo("#adminResult");          
+        if (data.features.length >= 1) {
+          $.each(data.features, function (i, feature) {
+              var div = $("<span class='adminResultitem'></span>").appendTo("#adminResult");
 
-            //Write out all properties.
-            $.each(feature.properties, function (key, value) {
-                if (key === "stack_guid") {
-                    console.log("not displaying " + key + ": " + value);
-                } else if (key === "centroid") {
-                    var x = parseFloat(value[0]).toFixed(6);
-                    var y = parseFloat(value[1]).toFixed(6);
-                    $("<div><span style='font-weight:600;'>" + key + ": </span> " + x + ", " + y + "</div>").appendTo(div);
-                } else {
-                    $("<div><span style='font-weight:600;'>" + key + ": </span> " + value + "</div>").appendTo(div);
-                }                
-            });
+              //Write out all properties.
+              $.each(feature.properties, function (key, value) {
+                  if (key === "stack_guid") {
+                      console.log("not displaying " + key + ": " + value);
+                  } else if (key === "centroid") {
+                      var x = parseFloat(value[0]).toFixed(6);
+                      var y = parseFloat(value[1]).toFixed(6);
+                      $("<div><span style='font-weight:600;'>" + key + ": </span> " + x + ", " + y + "</div>").appendTo(div);
+                  } else {
+                      $("<div><span style='font-weight:600;'>" + key + ": </span> " + value + "</div>").appendTo(div);
+                  }
+              });
 
-            showMapFeature(feature);
-        });
+              showMapFeature(feature);
+              $("#uxChooseThis").prop("disabled", false); //enabled the second option box
+              $("#uxChooseThis").css("display", "block");
+          });
+        } else {
+            $("#adminResult").html("No Admin Stack Available");
+            $("#uxChooseThis").prop("disabled", false);
+            $("#uxChooseThis").css("display", "none");
+        }
+
     }
 
     //Display the feature on the map
@@ -445,8 +449,8 @@
             $(this).val("") === "";
         });
 
-        //diasable the select location button DK
-        $("#uxChooseThis").prop("disabled", false); //enabled the second option box
+        // //diasable the select location button DK
+        // $("#uxChooseThis").prop("disabled", false); //enabled the second option box
     });
 </script>
 <script>
